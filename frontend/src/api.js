@@ -25,7 +25,8 @@ import {
 
 import {
   getListOfUsers,
-  postNewUser
+  postNewUser,
+  // optionally you may import update/delete integration if you like
 } from './integrations/user-integration';
 
 
@@ -349,6 +350,8 @@ function normalizeUser(u = {}) {
   return {
     ...u,
     assistantIds: Array.isArray(assistantIds) ? assistantIds : [],
+    // keep legacy fields around for UI compatibility
+    allowedAssistantIds: Array.isArray(assistantIds) ? assistantIds : (u.allowedAssistantIds || [])
   };
 }
 
@@ -361,7 +364,7 @@ export async function adminListUsers() {
 
 /**
  * Create new user or update existing user
- * - If `id` is provided, this will call PUT /api/admin/users/:id (update)
+ * - If `id` is provided, this will call PUT /api/users/:id (update)
  * - If no `id` provided, will call postNewUser(...) (create)
  *
  * Accepts either `assistantIds` or `allowedAssistantIds` (normalized).
@@ -395,7 +398,7 @@ export async function adminCreateUser({ username, password, assistantIds = [], a
   const payload = { username, assistantIds: aIds };
   if (password) payload.password = password;
 
-  const updated = await request(`/api/admin/users/${id}`, {
+  const updated = await request(`/api/users/${id}`, {
     method: "PUT",
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify(payload),
@@ -417,7 +420,7 @@ export async function adminUpdateUser(userId, { username, assistantIds = [], pas
   const payload = { username, assistantIds };
   if (password) payload.password = password;
 
-  const updated = await request(`/api/admin/users/${userId}`, {
+  const updated = await request(`/api/users/${userId}`, {
     method: "PUT",
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify(payload),
@@ -428,7 +431,8 @@ export async function adminUpdateUser(userId, { username, assistantIds = [], pas
 
 export async function adminDeleteUser(userId) {
   const token = getToken();
-  return request(`/api/admin/users/${userId}`, {
+  if (!token) throw new Error("Not authenticated (missing token)");
+  return request(`/api/users/${userId}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -436,7 +440,7 @@ export async function adminDeleteUser(userId) {
 
 export async function adminResetUserPassword(userId, newPassword) {
   const token = getToken();
-  return request(`/api/admin/users/${userId}/reset-password`, {
+  return request(`/api/users/${userId}/reset-password`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify({ password: newPassword }),

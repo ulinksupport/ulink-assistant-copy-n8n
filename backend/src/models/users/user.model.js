@@ -84,8 +84,19 @@ async function retrieveUsers(filter) {
     ], { allowDiskUse: true });
 }
 
+/**
+ * Delete a user by id
+ * - removes the user document
+ * - does NOT remove other historical records (chats) — those are validated before calling.
+ */
+async function deleteUserById(id) {
+    // returns the deleted document (or null if not found)
+    return await User.findByIdAndDelete(id);
+}
+
 module.exports = {
     getUserById,
     checkExistUserRecord,
-    retrieveUsers
+    retrieveUsers,
+    deleteUserById
 }

@@ -21,16 +21,10 @@ app.use(cors({
   origin: (origin, cb) => {
     cb(null, !origin || allowed.includes(origin))
   },
-  methods: ['GET', 'POST', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.options('*', cors());
-
-// -------- health first (never blocked) ----------
-app.get('/healthz', (_req, res) => {
-  console.log('Health');
-  return res.json({ ok: true })
-});
 
 
 // Define API Routes in here
