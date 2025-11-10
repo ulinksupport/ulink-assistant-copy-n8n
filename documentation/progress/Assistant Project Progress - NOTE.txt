@@ -50,12 +50,21 @@ as per 03-November-2025 Status
 			(Hadi)
 			
 			2.1. Create edit form user & assistant like (create mode), but edit form UI. = in-progress almost done on UI Part
-			2.2. Edit API & Integration it.	
+			2.2. Edit API & Integration it.(hold )
 	
 	
 3. what is next
-	
-	(Sumaiya)
+    3.1 exploring iframe(how it works,how it looks in dashboard UI)
+	3.2 explore new chat function on lindy platform
+	3.3 chat history in UI from Lindy bubblechat
+	3.31 chat history per user(explore how it works)
+	3.4 designing button for Lindy multiple bots
+	3.5 implement singlife chatbot through Lindy.
+	3.6 If its possible to have user systems like previous project.( specific bots for specific users)
+
+
+
+	(Sumaiya) Keep in View
 	3.1. integrate when chat finish for singlife assistant
 		-> event triggered during singlife assistance close the chat flag.
 		-> export current chat after the end the conversation (DEV to pick option 1 or 2 for best approach)
