@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { login } from "../api.js";
 
 export default function Login() {
@@ -22,26 +22,51 @@ export default function Login() {
   return (
     <div className="center-screen">
       <div className="card" style={{ maxWidth: 420 }}>
-        <div className="logo-ring" />
-        <h2 className="form-title">Welcome to Ulink Assist</h2>
+        
+        {/* ⭐ Allianz Logo (replaces the ring) */}
+        <img
+          src="/allianz-logo.png"
+          alt="Allianz Logo"
+          style={{
+            width: 120,
+            height: "auto",
+            display: "block",
+            margin: "0 auto 10px auto"
+          }}
+        />
+
+        <h2 className="form-title">Welcome to Allianz Agent Tools</h2>
         <p className="form-sub">Sign in to continue</p>
 
         <form className="stack" onSubmit={onSubmit}>
           <label>Username</label>
-          <input className="input" value={username} onChange={e=>setUsername(e.target.value)} />
+          <input
+            className="input"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
 
           <label>Password</label>
-          <input className="input" type="password" value={password} onChange={e=>setPassword(e.target.value)} />
+          <input
+            className="input"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
           {error && <div style={{ color: "crimson" }}>{error}</div>}
 
-          <button className="button primary" type="submit">Sign in</button>
+          <button className="button primary" type="submit">
+            Sign in
+          </button>
         </form>
 
-        {/* <div className="row" style={{ marginTop: 10 }}>
+        {/* 
+        <div className="row" style={{ marginTop: 10 }}>
           <span>New here?</span>
           <Link to="/signup" className="button ghost">Sign up</Link>
-        </div> */}
+        </div> 
+        */}
       </div>
     </div>
   );

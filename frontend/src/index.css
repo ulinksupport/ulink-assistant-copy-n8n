@@ -84,8 +84,8 @@ a{ color:inherit; text-decoration:none }
 }
 .button:active{ transform:translateY(1px) }
 .button.primary{
-  background:var(--accent);
-  color:#fff;
+  background:#0051a2;
+  color:lab(96.62% -1.14 -0.95);
   box-shadow:0 8px 18px rgba(17,24,39,.12);
 }
 .button.primary:hover{ filter:saturate(1.05) }
