@@ -25,7 +25,7 @@ import AdminPanel from "./AdminPanel.jsx";
 
 const LINDY_IFRAME_ASSISTANT = {
   key: "lindy-iframe",
-  name: "Security Bot",   // ✅ updated
+  name: "Allianz CSO",
 };
 
 export default function Dashboard() {
@@ -50,11 +50,13 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
 
+  // iframe refresh key (increment to force iframe reload)
   const [iframeRefreshKey, setIframeRefreshKey] = useState(0);
 
   const user = getUser();
   const isAdmin = user?.role === "admin";
 
+  // handle files from ChatUploadButton
   const onPickFiles = (files) => {
     const withIds = files.map((f) => ({
       id:
@@ -69,6 +71,7 @@ export default function Dashboard() {
   const removeAttachment = (id) =>
     setAttachments((prev) => prev.filter((a) => a.id !== id));
 
+  // load sessions when botKey changes (except when selecting Allianz CSO iframe)
   useEffect(() => {
     if (!botKey) {
       setSessions([]);
@@ -97,6 +100,7 @@ export default function Dashboard() {
     };
   }, [botKey]);
 
+  // load chatbots once and ensure Allianz CSO iframe assistant is included
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -231,9 +235,10 @@ export default function Dashboard() {
   const btnSendDisabled =
     !botKey || !sessionId || (!input.trim() && attachments?.length === 0);
 
+  // Render the Allianz CSO iframe embed when that assistant is selected
   const renderLindyIframe = () => {
     const src =
-      "https://chat.lindy.ai/embedded/lindyEmbed/f4b572d2-08b9-41bc-9e8c-b88cbd1c2772";
+      "https://chat.lindy.ai/embedded/lindyEmbed/744de731-56c5-4a9c-ba48-3175a50a48e1";
 
     return (
       <div
@@ -252,7 +257,7 @@ export default function Dashboard() {
           width="100%"
           height="100%"
           style={{ border: "none", display: "block", minHeight: 520 }}
-          title="Security Bot Embed"   // ✅ updated
+          title="Allianz CSO Embed"
         />
       </div>
     );
@@ -307,7 +312,7 @@ export default function Dashboard() {
             <div className="history">
               {botKey === LINDY_IFRAME_ASSISTANT.key ? (
                 <div className="muted">
-                  Security Bot — interaction inside the right panel.   {/* ✅ updated */}
+                  Allianz CSO — interaction inside the right panel.
                 </div>
               ) : sessions.length === 0 ? (
                 <div className="muted">No chats yet.</div>
@@ -336,7 +341,10 @@ export default function Dashboard() {
           {/* Right panel */}
           <section className="chat">
             <div className="chat-header">
-              <div className="row" style={{ gap: 8, alignItems: "center" }}>
+              <div
+                className="row"
+                style={{ gap: 8, alignItems: "center" }}
+              >
                 <div className="logo-ring small" aria-hidden />
                 <strong>
                   {botKey
@@ -346,6 +354,7 @@ export default function Dashboard() {
               </div>
 
               <div className="row" style={{ gap: 8 }}>
+                {/* NEW Allianz button */}
                 <button
                   className="button ghost"
                   onClick={() => navigate("/allianz/login")}
