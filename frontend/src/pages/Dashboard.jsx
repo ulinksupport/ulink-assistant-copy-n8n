@@ -28,6 +28,11 @@ const LINDY_IFRAME_ASSISTANT = {
   name: "Allianz CSO",
 };
 
+const LINDY_EMBED_ASSISTANT = {
+  key: "lindy-embed",
+  name: "Ulink Pre-Claim Assessment AI",
+};
+
 export default function Dashboard() {
   const navigate = useNavigate();
   useEffect(() => {
@@ -71,7 +76,31 @@ export default function Dashboard() {
   const removeAttachment = (id) =>
     setAttachments((prev) => prev.filter((a) => a.id !== id));
 
-  // load sessions when botKey changes (except when selecting Allianz CSO iframe)
+  // Load Lindy embed script once when Ulink assistant is selected
+  useEffect(() => {
+    if (botKey !== LINDY_EMBED_ASSISTANT.key) return;
+
+    // Check if script is already loaded
+    const existingScript = document.querySelector(
+      'script[src*="lindyEmbed.js"]'
+    );
+    if (existingScript) return;
+
+    // Create and append script to head
+    const script = document.createElement("script");
+    script.src =
+      "https://api.lindy.ai/api/lindyEmbed/lindyEmbed.js?a=56be8e4f-7ef5-4064-b2b4-43391726e566";
+    script.async = true;
+    script.crossOrigin = "use-credentials";
+    document.head.appendChild(script);
+
+    return () => {
+      // Optionally remove script when component unmounts or botKey changes
+      // But we keep it loaded to avoid reloading
+    };
+  }, [botKey]);
+
+  // load sessions when botKey changes (except when selecting Allianz CSO iframe or Ulink embed)
   useEffect(() => {
     if (!botKey) {
       setSessions([]);
@@ -79,7 +108,10 @@ export default function Dashboard() {
       return;
     }
 
-    if (botKey === LINDY_IFRAME_ASSISTANT.key) {
+    if (
+      botKey === LINDY_IFRAME_ASSISTANT.key ||
+      botKey === LINDY_EMBED_ASSISTANT.key
+    ) {
       setSessions([]);
       setSessionId("");
       return;
@@ -100,7 +132,7 @@ export default function Dashboard() {
     };
   }, [botKey]);
 
-  // load chatbots once and ensure Allianz CSO iframe assistant is included
+  // load chatbots once and ensure Allianz CSO iframe assistant and Ulink embed assistant are included
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -109,6 +141,8 @@ export default function Dashboard() {
         const out = Array.isArray(bots) ? [...bots] : [];
         if (!out.some((b) => b.key === LINDY_IFRAME_ASSISTANT.key))
           out.push(LINDY_IFRAME_ASSISTANT);
+        if (!out.some((b) => b.key === LINDY_EMBED_ASSISTANT.key))
+          out.push(LINDY_EMBED_ASSISTANT);
         if (mounted) setFilteredBots(out);
       } catch (err) {
         console.error("Failed to list chatbots:", err);
@@ -129,7 +163,12 @@ export default function Dashboard() {
   }, [sessionId, currentSession?.messages, sessions]);
 
   async function onNewChat() {
-    if (!botKey || botKey === LINDY_IFRAME_ASSISTANT.key) return;
+    if (
+      !botKey ||
+      botKey === LINDY_IFRAME_ASSISTANT.key ||
+      botKey === LINDY_EMBED_ASSISTANT.key
+    )
+      return;
     setLoading(true);
     try {
       const s = await createSession(botKey);
@@ -263,6 +302,29 @@ export default function Dashboard() {
     );
   };
 
+  // Render placeholder for Ulink Pre-Claim Assessment AI (Lindy embed chat bubble)
+  const renderLindyEmbed = () => {
+    return (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          minHeight: 520,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: 12,
+          background: "transparent",
+        }}
+      >
+        <div className="muted">
+          Ulink Pre-Claim Assessment AI — The chat bubble should appear on the
+          page. If it doesn't appear, please refresh the page.
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="console-page">
       <div className="console-wrap">
@@ -288,7 +350,11 @@ export default function Dashboard() {
               <div className="row">
                 <button
                   className="button ghost"
-                  disabled={!botKey || botKey === LINDY_IFRAME_ASSISTANT.key}
+                  disabled={
+                    !botKey ||
+                    botKey === LINDY_IFRAME_ASSISTANT.key ||
+                    botKey === LINDY_EMBED_ASSISTANT.key
+                  }
                   onClick={onNewChat}
                 >
                   New chat
@@ -313,6 +379,10 @@ export default function Dashboard() {
               {botKey === LINDY_IFRAME_ASSISTANT.key ? (
                 <div className="muted">
                   Allianz CSO — interaction inside the right panel.
+                </div>
+              ) : botKey === LINDY_EMBED_ASSISTANT.key ? (
+                <div className="muted">
+                  Ulink Pre-Claim Assessment AI — interaction via chat bubble.
                 </div>
               ) : sessions.length === 0 ? (
                 <div className="muted">No chats yet.</div>
@@ -398,6 +468,8 @@ export default function Dashboard() {
             >
               {botKey === LINDY_IFRAME_ASSISTANT.key ? (
                 renderLindyIframe()
+              ) : botKey === LINDY_EMBED_ASSISTANT.key ? (
+                renderLindyEmbed()
               ) : (
                 <>
                   {!botKey ? (
@@ -435,7 +507,8 @@ export default function Dashboard() {
               )}
             </div>
 
-            {botKey !== LINDY_IFRAME_ASSISTANT.key && (
+            {botKey !== LINDY_IFRAME_ASSISTANT.key &&
+              botKey !== LINDY_EMBED_ASSISTANT.key && (
               <form className="composer" onSubmit={onSend}>
                 <div className="upload-button-wrap">
                   <ChatUploadButton
