@@ -281,7 +281,7 @@ export default function Dashboard() {
   // Render the Ulink Pre-Claim Assessment AI iframe embed when that assistant is selected
   const renderUlinkIframe = () => {
     const src =
-      "https://chat.lindy.ai/embedded/lindyEmbed/56be8e4f-7ef5-4064-b2b4-43391726e566?isLiveCapture=true";
+      "https://chat.lindy.ai/embedded/lindyEmbed/56be8e4f-7ef5-4064-b2b4-43391726e566";
 
     return (
       <div
