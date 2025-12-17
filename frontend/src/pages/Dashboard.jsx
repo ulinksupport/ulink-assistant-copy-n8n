@@ -76,31 +76,7 @@ export default function Dashboard() {
   const removeAttachment = (id) =>
     setAttachments((prev) => prev.filter((a) => a.id !== id));
 
-  // Load Lindy embed script once when Ulink assistant is selected
-  useEffect(() => {
-    if (botKey !== LINDY_EMBED_ASSISTANT.key) return;
-
-    // Check if script is already loaded
-    const existingScript = document.querySelector(
-      'script[src*="lindyEmbed.js"]'
-    );
-    if (existingScript) return;
-
-    // Create and append script to head
-    const script = document.createElement("script");
-    script.src =
-      "https://api.lindy.ai/api/lindyEmbed/lindyEmbed.js?a=56be8e4f-7ef5-4064-b2b4-43391726e566";
-    script.async = true;
-    script.crossOrigin = "use-credentials";
-    document.head.appendChild(script);
-
-    return () => {
-      // Optionally remove script when component unmounts or botKey changes
-      // But we keep it loaded to avoid reloading
-    };
-  }, [botKey]);
-
-  // load sessions when botKey changes (except when selecting Allianz CSO iframe or Ulink embed)
+  // load sessions when botKey changes (except when selecting Allianz CSO iframe or Ulink iframe)
   useEffect(() => {
     if (!botKey) {
       setSessions([]);
@@ -302,25 +278,30 @@ export default function Dashboard() {
     );
   };
 
-  // Render placeholder for Ulink Pre-Claim Assessment AI (Lindy embed chat bubble)
-  const renderLindyEmbed = () => {
+  // Render the Ulink Pre-Claim Assessment AI iframe embed when that assistant is selected
+  const renderUlinkIframe = () => {
+    const src =
+      "https://chat.lindy.ai/embedded/lindyEmbed/56be8e4f-7ef5-4064-b2b4-43391726e566?isLiveCapture=true";
+
     return (
       <div
         style={{
           width: "100%",
           height: "100%",
           minHeight: 520,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
           borderRadius: 12,
-          background: "transparent",
+          overflow: "hidden",
+          boxShadow: "0 8px 28px rgba(16,24,40,0.08)",
         }}
       >
-        <div className="muted">
-          Ulink Pre-Claim Assessment AI — The chat bubble should appear on the
-          page. If it doesn't appear, please refresh the page.
-        </div>
+        <iframe
+          key={iframeRefreshKey}
+          src={src}
+          width="100%"
+          height="100%"
+          style={{ border: "none", display: "block", minHeight: 520 }}
+          title="Ulink Pre-Claim Assessment AI Embed"
+        />
       </div>
     );
   };
@@ -382,7 +363,8 @@ export default function Dashboard() {
                 </div>
               ) : botKey === LINDY_EMBED_ASSISTANT.key ? (
                 <div className="muted">
-                  Ulink Pre-Claim Assessment AI — interaction via chat bubble.
+                  Ulink Pre-Claim Assessment AI — interaction inside the right
+                  panel.
                 </div>
               ) : sessions.length === 0 ? (
                 <div className="muted">No chats yet.</div>
@@ -469,7 +451,7 @@ export default function Dashboard() {
               {botKey === LINDY_IFRAME_ASSISTANT.key ? (
                 renderLindyIframe()
               ) : botKey === LINDY_EMBED_ASSISTANT.key ? (
-                renderLindyEmbed()
+                renderUlinkIframe()
               ) : (
                 <>
                   {!botKey ? (
