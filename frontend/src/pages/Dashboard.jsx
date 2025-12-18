@@ -33,6 +33,11 @@ const LINDY_EMBED_ASSISTANT = {
   name: "Ulink Pre-Claim Assessment AI",
 };
 
+const MEDICAL_BILL_ASSISTANT = {
+  key: "medical-bill",
+  name: "Medical Bill Analysis Agent",
+};
+
 export default function Dashboard() {
   const navigate = useNavigate();
   useEffect(() => {
@@ -86,7 +91,8 @@ export default function Dashboard() {
 
     if (
       botKey === LINDY_IFRAME_ASSISTANT.key ||
-      botKey === LINDY_EMBED_ASSISTANT.key
+      botKey === LINDY_EMBED_ASSISTANT.key ||
+      botKey === MEDICAL_BILL_ASSISTANT.key
     ) {
       setSessions([]);
       setSessionId("");
@@ -119,6 +125,8 @@ export default function Dashboard() {
           out.push(LINDY_IFRAME_ASSISTANT);
         if (!out.some((b) => b.key === LINDY_EMBED_ASSISTANT.key))
           out.push(LINDY_EMBED_ASSISTANT);
+        if (!out.some((b) => b.key === MEDICAL_BILL_ASSISTANT.key))
+          out.push(MEDICAL_BILL_ASSISTANT);
         if (mounted) setFilteredBots(out);
       } catch (err) {
         console.error("Failed to list chatbots:", err);
@@ -142,7 +150,8 @@ export default function Dashboard() {
     if (
       !botKey ||
       botKey === LINDY_IFRAME_ASSISTANT.key ||
-      botKey === LINDY_EMBED_ASSISTANT.key
+      botKey === LINDY_EMBED_ASSISTANT.key ||
+      botKey === MEDICAL_BILL_ASSISTANT.key
     )
       return;
     setLoading(true);
@@ -306,6 +315,34 @@ export default function Dashboard() {
     );
   };
 
+  // Render the Medical Bill Analysis Agent iframe embed when that assistant is selected
+  const renderMedicalBillIframe = () => {
+    const src =
+      "https://chat.lindy.ai/embedded/lindyEmbed/1417e4c7-005e-47a6-8ac3-75bfa541d1de";
+
+    return (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          minHeight: 520,
+          borderRadius: 12,
+          overflow: "hidden",
+          boxShadow: "0 8px 28px rgba(16,24,40,0.08)",
+        }}
+      >
+        <iframe
+          key={iframeRefreshKey}
+          src={src}
+          width="100%"
+          height="100%"
+          style={{ border: "none", display: "block", minHeight: 520 }}
+          title="Medical Bill Analysis Agent Embed"
+        />
+      </div>
+    );
+  };
+
   return (
     <div className="console-page">
       <div className="console-wrap">
@@ -334,7 +371,8 @@ export default function Dashboard() {
                   disabled={
                     !botKey ||
                     botKey === LINDY_IFRAME_ASSISTANT.key ||
-                    botKey === LINDY_EMBED_ASSISTANT.key
+                    botKey === LINDY_EMBED_ASSISTANT.key ||
+                    botKey === MEDICAL_BILL_ASSISTANT.key
                   }
                   onClick={onNewChat}
                 >
@@ -364,6 +402,11 @@ export default function Dashboard() {
               ) : botKey === LINDY_EMBED_ASSISTANT.key ? (
                 <div className="muted">
                   Ulink Pre-Claim Assessment AI — interaction inside the right
+                  panel.
+                </div>
+              ) : botKey === MEDICAL_BILL_ASSISTANT.key ? (
+                <div className="muted">
+                  Medical Bill Analysis Agent — interaction inside the right
                   panel.
                 </div>
               ) : sessions.length === 0 ? (
@@ -452,6 +495,8 @@ export default function Dashboard() {
                 renderLindyIframe()
               ) : botKey === LINDY_EMBED_ASSISTANT.key ? (
                 renderUlinkIframe()
+              ) : botKey === MEDICAL_BILL_ASSISTANT.key ? (
+                renderMedicalBillIframe()
               ) : (
                 <>
                   {!botKey ? (
@@ -490,7 +535,8 @@ export default function Dashboard() {
             </div>
 
             {botKey !== LINDY_IFRAME_ASSISTANT.key &&
-              botKey !== LINDY_EMBED_ASSISTANT.key && (
+              botKey !== LINDY_EMBED_ASSISTANT.key &&
+              botKey !== MEDICAL_BILL_ASSISTANT.key && (
               <form className="composer" onSubmit={onSend}>
                 <div className="upload-button-wrap">
                   <ChatUploadButton
