@@ -27,6 +27,10 @@ const LINDY_IFRAME_ASSISTANT = {
   key: "lindy-iframe",
   name: "Allianz CSO",
 };
+const PATIENT_INTAKE_IFRAME_ASSISTANT = {
+  key: "patient-intake-iframe",
+  name: "Patient Intake",
+};
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -79,11 +83,15 @@ export default function Dashboard() {
       return;
     }
 
-    if (botKey === LINDY_IFRAME_ASSISTANT.key) {
-      setSessions([]);
-      setSessionId("");
-      return;
-    }
+    if (
+  botKey === LINDY_IFRAME_ASSISTANT.key ||
+  botKey === PATIENT_INTAKE_IFRAME_ASSISTANT.key
+) {
+  setSessions([]);
+  setSessionId("");
+  return;
+}
+
 
     let mounted = true;
     (async () => {
@@ -109,6 +117,9 @@ export default function Dashboard() {
         const out = Array.isArray(bots) ? [...bots] : [];
         if (!out.some((b) => b.key === LINDY_IFRAME_ASSISTANT.key))
           out.push(LINDY_IFRAME_ASSISTANT);
+        if (!out.some((b) => b.key === PATIENT_INTAKE_IFRAME_ASSISTANT.key))
+  out.push(PATIENT_INTAKE_IFRAME_ASSISTANT);
+
         if (mounted) setFilteredBots(out);
       } catch (err) {
         console.error("Failed to list chatbots:", err);
@@ -262,6 +273,30 @@ export default function Dashboard() {
       </div>
     );
   };
+const renderPatientIntakeIframe = () => {
+  const src = "https://ulink.app.n8n.cloud/webhook/patient-intake";
+
+  return (
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        minHeight: 520,
+        borderRadius: 12,
+        overflow: "hidden",
+        boxShadow: "0 8px 28px rgba(16,24,40,0.08)",
+      }}
+    >
+      <iframe
+        src={src}
+        width="100%"
+        height="100%"
+        style={{ border: "none", display: "block", minHeight: 520 }}
+        title="Patient Intake"
+      />
+    </div>
+  );
+};
 
   return (
     <div className="console-page">
@@ -397,8 +432,11 @@ export default function Dashboard() {
               aria-live="polite"
             >
               {botKey === LINDY_IFRAME_ASSISTANT.key ? (
-                renderLindyIframe()
-              ) : (
+  renderLindyIframe()
+) : botKey === PATIENT_INTAKE_IFRAME_ASSISTANT.key ? (
+  renderPatientIntakeIframe()
+) : (
+
                 <>
                   {!botKey ? (
                     <div className="muted">Select an assistant to start.</div>
@@ -435,7 +473,9 @@ export default function Dashboard() {
               )}
             </div>
 
-            {botKey !== LINDY_IFRAME_ASSISTANT.key && (
+            {botKey !== LINDY_IFRAME_ASSISTANT.key &&
+ botKey !== PATIENT_INTAKE_IFRAME_ASSISTANT.key && (
+
               <form className="composer" onSubmit={onSend}>
                 <div className="upload-button-wrap">
                   <ChatUploadButton
