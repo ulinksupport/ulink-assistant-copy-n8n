@@ -29,6 +29,9 @@ import {
   // optionally you may import update/delete integration if you like
 } from './integrations/user-integration';
 
+// Import webhook configuration
+import { getWebhookUrl, isWebhookAssistant } from './webhookConfig';
+
 
 // ====== Small HTTP helper ======
 async function request(path, opts = {}) {
@@ -48,11 +51,11 @@ async function request(path, opts = {}) {
 
 // ====== Auth storage ======
 const LS_TOKEN = "ulink.auth.token";
-const LS_USER  = "ulink.auth.user";
+const LS_USER = "ulink.auth.user";
 
 export function setAuth(token, user) {
   if (token) localStorage.setItem(LS_TOKEN, token);
-  if (user)  localStorage.setItem(LS_USER, JSON.stringify(user));
+  if (user) localStorage.setItem(LS_USER, JSON.stringify(user));
 }
 
 export function getToken() {
@@ -82,7 +85,7 @@ export async function login(username, password) {
     body: JSON.stringify({ username, password }),
   });
   const token = data.token;
-  const user  = data.user || (data.username ? { username, username: data.username } : { username });
+  const user = data.user || (data.username ? { username, username: data.username } : { username });
   if (!token) throw new Error("No token in response");
   setAuth(token, user);
   return user;
@@ -272,11 +275,16 @@ function fallbackTitle(message) {
 
 // Demo reply for now — replace with real backend call later.
 export async function sendMessage(botKey, sessionId, text, setIsTyping, setSessions, attachmentFiles = [], isFirstReply = false) {
+  // Check if this is a webhook-based assistant
+  if (isWebhookAssistant(botKey)) {
+    return await sendWebhookMessage(botKey, sessionId, text, setIsTyping, setSessions, attachmentFiles, isFirstReply);
+  }
+
   // Update Chat title API
   const state = loadState();
   const existingSession = state.sessions.find(s => s.id === sessionId);
   if (existingSession?.messages?.length === 0) {
-    
+
     let title = fallbackTitle(text);
     if (isFirstReply) {
       title = 'Upload Documents';
@@ -314,6 +322,98 @@ export async function sendMessage(botKey, sessionId, text, setIsTyping, setSessi
     }, attachmentFiles);
   } catch (error) {
     console.log(error);
+  }
+
+  // give response buffer typing before display the actual message
+  setIsTyping(false);
+  appendMessage(sessionId, "assistant", reply);
+  setSessions(await listSessions(botKey));
+
+  return reply;
+}
+
+/**
+ * Send message to N8N webhook-based assistant
+ */
+async function sendWebhookMessage(botKey, sessionId, text, setIsTyping, setSessions, attachmentFiles = [], isFirstReply = false) {
+  // Update Chat title API
+  const state = loadState();
+  const existingSession = state.sessions.find(s => s.id === sessionId);
+  if (existingSession?.messages?.length === 0) {
+    let title = fallbackTitle(text);
+    if (isFirstReply) {
+      title = 'New Conversation';
+    }
+
+    try {
+      await doUpdateChatTitle({ sessionId, title });
+    } catch (err) {
+      console.warn("doUpdateChatTitle failed:", err);
+    }
+
+    existingSession.title = title;
+    saveState(state);
+  }
+
+  if (text && !isFirstReply) {
+    appendMessage(sessionId, "user", text);
+  }
+
+  const authUser = getUser();
+  const userId = authUser?.id;
+
+  setSessions(await listSessions(botKey));
+  setIsTyping(true);
+
+  // Get webhook URL for this assistant
+  const webhookUrl = getWebhookUrl(botKey);
+
+  let reply = 'Error: Unable to connect to assistant.';
+
+  try {
+    if (!webhookUrl || webhookUrl.startsWith('PLACEHOLDER')) {
+      throw new Error('Webhook URL not configured for this assistant.');
+    }
+
+    // Prepare webhook payload
+    const payload = {
+      sessionId,
+      userId,
+      message: text,
+      assistantKey: botKey,
+      timestamp: new Date().toISOString()
+    };
+
+    // Handle file attachments if any
+    if (attachmentFiles && attachmentFiles.length > 0) {
+      // For webhook, we'll need to convert files to base64 or URLs
+      payload.hasAttachments = true;
+      payload.attachmentCount = attachmentFiles.length;
+      // TODO: Implement file upload logic if needed
+    }
+
+    // Call N8N webhook
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Webhook returned status ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Extract reply from webhook response
+    // Adjust this based on your N8N workflow response structure
+    reply = data.reply || data.message || data.response || 'Response received from assistant.';
+
+  } catch (error) {
+    console.error('Webhook error:', error);
+    reply = `Error: ${error.message}`;
   }
 
   // give response buffer typing before display the actual message

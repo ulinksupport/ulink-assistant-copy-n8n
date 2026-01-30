@@ -22,16 +22,9 @@ import ChatUploadButton from "../components/utils/ChatUploadButton";
 import { TypingDots } from "../components/utils/TypingDots.jsx";
 import LoadingSpinner from "../components/utils/LoadingSpinner.jsx";
 import AdminPanel from "./AdminPanel.jsx";
+import { getWebhookAssistants } from "../webhookConfig.js";
 
-const LINDY_IFRAME_ASSISTANT = {
-  key: "lindy-iframe",
-  name: "Allianz CSO",
-};
-const PATIENT_INTAKE_IFRAME_ASSISTANT = {
-  key: "patient-intake-iframe",
-  name: "Patient Intake",
-};
-
+// Keep only 2 iframe assistants
 const LINDY_EMBED_ASSISTANT = {
   key: "lindy-embed",
   name: "Ulink Pre-Claim Assessment AI",
@@ -94,8 +87,6 @@ export default function Dashboard() {
     }
 
     if (
-      botKey === LINDY_IFRAME_ASSISTANT.key ||
-      botKey === PATIENT_INTAKE_IFRAME_ASSISTANT.key ||
       botKey === LINDY_EMBED_ASSISTANT.key ||
       botKey === MEDICAL_BILL_ASSISTANT.key
     ) {
@@ -119,21 +110,28 @@ export default function Dashboard() {
     };
   }, [botKey]);
 
-  // load chatbots once and ensure Allianz CSO iframe assistant and Ulink embed assistant are included
+  // load chatbots once and add webhook + iframe assistants
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
         const bots = await listChatbots();
         const out = Array.isArray(bots) ? [...bots] : [];
-        if (!out.some((b) => b.key === LINDY_IFRAME_ASSISTANT.key))
-          out.push(LINDY_IFRAME_ASSISTANT);
-        if (!out.some((b) => b.key === PATIENT_INTAKE_IFRAME_ASSISTANT.key))
-          out.push(PATIENT_INTAKE_IFRAME_ASSISTANT);
+
+        // Add 5 webhook-based assistants
+        const webhookAssistants = getWebhookAssistants();
+        webhookAssistants.forEach(assistant => {
+          if (!out.some((b) => b.key === assistant.key)) {
+            out.push(assistant);
+          }
+        });
+
+        // Add 2 iframe assistants
         if (!out.some((b) => b.key === LINDY_EMBED_ASSISTANT.key))
           out.push(LINDY_EMBED_ASSISTANT);
         if (!out.some((b) => b.key === MEDICAL_BILL_ASSISTANT.key))
           out.push(MEDICAL_BILL_ASSISTANT);
+
         if (mounted) setFilteredBots(out);
       } catch (err) {
         console.error("Failed to list chatbots:", err);
@@ -156,7 +154,6 @@ export default function Dashboard() {
   async function onNewChat() {
     if (
       !botKey ||
-      botKey === LINDY_IFRAME_ASSISTANT.key ||
       botKey === LINDY_EMBED_ASSISTANT.key ||
       botKey === MEDICAL_BILL_ASSISTANT.key
     )
@@ -266,58 +263,6 @@ export default function Dashboard() {
   const btnSendDisabled =
     !botKey || !sessionId || (!input.trim() && attachments?.length === 0);
 
-  // Render the Allianz CSO iframe embed when that assistant is selected
-  const renderLindyIframe = () => {
-    const src =
-      "https://chat.lindy.ai/embedded/lindyEmbed/744de731-56c5-4a9c-ba48-3175a50a48e1";
-
-    return (
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          minHeight: 520,
-          borderRadius: 12,
-          overflow: "hidden",
-          boxShadow: "0 8px 28px rgba(16,24,40,0.08)",
-        }}
-      >
-        <iframe
-          key={iframeRefreshKey}
-          src={src}
-          width="100%"
-          height="100%"
-          style={{ border: "none", display: "block", minHeight: 520 }}
-          title="Allianz CSO Embed"
-        />
-      </div>
-    );
-  };
-const renderPatientIntakeIframe = () => {
-  const src = "https://ulink.app.n8n.cloud/webhook/patient-intake";
-
-  return (
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        minHeight: 520,
-        borderRadius: 12,
-        overflow: "hidden",
-        boxShadow: "0 8px 28px rgba(16,24,40,0.08)",
-      }}
-    >
-      <iframe
-        src={src}
-        width="100%"
-        height="100%"
-        style={{ border: "none", display: "block", minHeight: 520 }}
-        title="Patient Intake"
-      />
-    </div>
-  );
-};
-
   // Render the Ulink Pre-Claim Assessment AI iframe embed when that assistant is selected
   const renderUlinkIframe = () => {
     const src =
@@ -401,7 +346,6 @@ const renderPatientIntakeIframe = () => {
                   className="button ghost"
                   disabled={
                     !botKey ||
-                    botKey === LINDY_IFRAME_ASSISTANT.key ||
                     botKey === LINDY_EMBED_ASSISTANT.key ||
                     botKey === MEDICAL_BILL_ASSISTANT.key
                   }
@@ -426,11 +370,7 @@ const renderPatientIntakeIframe = () => {
 
             <div style={{ fontWeight: 700, marginTop: 10 }}>History</div>
             <div className="history">
-              {botKey === LINDY_IFRAME_ASSISTANT.key ? (
-                <div className="muted">
-                  Allianz CSO — interaction inside the right panel.
-                </div>
-              ) : botKey === LINDY_EMBED_ASSISTANT.key ? (
+              {botKey === LINDY_EMBED_ASSISTANT.key ? (
                 <div className="muted">
                   Ulink Pre-Claim Assessment AI — interaction inside the right
                   panel.
@@ -522,11 +462,7 @@ const renderPatientIntakeIframe = () => {
               role="log"
               aria-live="polite"
             >
-              {botKey === LINDY_IFRAME_ASSISTANT.key ? (
-                renderLindyIframe()
-              ) : botKey === PATIENT_INTAKE_IFRAME_ASSISTANT.key ? (
-                renderPatientIntakeIframe()
-              ) : botKey === LINDY_EMBED_ASSISTANT.key ? (
+              {botKey === LINDY_EMBED_ASSISTANT.key ? (
                 renderUlinkIframe()
               ) : botKey === MEDICAL_BILL_ASSISTANT.key ? (
                 renderMedicalBillIframe()
@@ -567,55 +503,53 @@ const renderPatientIntakeIframe = () => {
               )}
             </div>
 
-            {botKey !== LINDY_IFRAME_ASSISTANT.key &&
-              botKey !== PATIENT_INTAKE_IFRAME_ASSISTANT.key &&
-              botKey !== LINDY_EMBED_ASSISTANT.key &&
+            {botKey !== LINDY_EMBED_ASSISTANT.key &&
               botKey !== MEDICAL_BILL_ASSISTANT.key && (
-              <form className="composer" onSubmit={onSend}>
-                <div className="upload-button-wrap">
-                  <ChatUploadButton
+                <form className="composer" onSubmit={onSend}>
+                  <div className="upload-button-wrap">
+                    <ChatUploadButton
+                      disabled={!botKey || !sessionId || sendDisabled || uploading}
+                      fileCount={attachments.length}
+                      onFiles={onPickFiles}
+                    />
+                  </div>
+
+                  <input
+                    className="input input-message"
+                    placeholder={
+                      !botKey ? "Choose an assistant first" : "Type a message…"
+                    }
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
                     disabled={!botKey || !sessionId || sendDisabled || uploading}
-                    fileCount={attachments.length}
-                    onFiles={onPickFiles}
+                    aria-label="Message"
                   />
-                </div>
+                  <button
+                    className="button primary send-btn"
+                    disabled={btnSendDisabled || sendDisabled || uploading}
+                    aria-disabled={btnSendDisabled || sendDisabled || uploading}
+                  >
+                    {isSending ? "Sending..." : "Send"}
+                  </button>
 
-                <input
-                  className="input input-message"
-                  placeholder={
-                    !botKey ? "Choose an assistant first" : "Type a message…"
-                  }
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  disabled={!botKey || !sessionId || sendDisabled || uploading}
-                  aria-label="Message"
-                />
-                <button
-                  className="button primary send-btn"
-                  disabled={btnSendDisabled || sendDisabled || uploading}
-                  aria-disabled={btnSendDisabled || sendDisabled || uploading}
-                >
-                  {isSending ? "Sending..." : "Send"}
-                </button>
-
-                <div className="attachments-row" aria-live="polite">
-                  {attachments.map(({ id, file }) => (
-                    <div key={id} className="chip" title={file.name}>
-                      <span className="chip-icon">📎</span>
-                      <span className="chip-name">{file.name}</span>
-                      <button
-                        type="button"
-                        className="chip-remove"
-                        onClick={() => removeAttachment(id)}
-                        aria-label={`Remove attachment ${file.name}`}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </form>
-            )}
+                  <div className="attachments-row" aria-live="polite">
+                    {attachments.map(({ id, file }) => (
+                      <div key={id} className="chip" title={file.name}>
+                        <span className="chip-icon">📎</span>
+                        <span className="chip-name">{file.name}</span>
+                        <button
+                          type="button"
+                          className="chip-remove"
+                          onClick={() => removeAttachment(id)}
+                          aria-label={`Remove attachment ${file.name}`}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </form>
+              )}
           </section>
         </div>
       </div>
