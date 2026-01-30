@@ -94,17 +94,8 @@ export default function Dashboard() {
     }
 
     if (
-<<<<<<< HEAD
-  botKey === LINDY_IFRAME_ASSISTANT.key ||
-  botKey === PATIENT_INTAKE_IFRAME_ASSISTANT.key
-) {
-  setSessions([]);
-  setSessionId("");
-  return;
-}
-
-=======
       botKey === LINDY_IFRAME_ASSISTANT.key ||
+      botKey === PATIENT_INTAKE_IFRAME_ASSISTANT.key ||
       botKey === LINDY_EMBED_ASSISTANT.key ||
       botKey === MEDICAL_BILL_ASSISTANT.key
     ) {
@@ -112,7 +103,6 @@ export default function Dashboard() {
       setSessionId("");
       return;
     }
->>>>>>> c322781026ad09fc8572d8f01fb9a3a45b0e37f4
 
     let mounted = true;
     (async () => {
@@ -138,16 +128,12 @@ export default function Dashboard() {
         const out = Array.isArray(bots) ? [...bots] : [];
         if (!out.some((b) => b.key === LINDY_IFRAME_ASSISTANT.key))
           out.push(LINDY_IFRAME_ASSISTANT);
-<<<<<<< HEAD
         if (!out.some((b) => b.key === PATIENT_INTAKE_IFRAME_ASSISTANT.key))
-  out.push(PATIENT_INTAKE_IFRAME_ASSISTANT);
-
-=======
+          out.push(PATIENT_INTAKE_IFRAME_ASSISTANT);
         if (!out.some((b) => b.key === LINDY_EMBED_ASSISTANT.key))
           out.push(LINDY_EMBED_ASSISTANT);
         if (!out.some((b) => b.key === MEDICAL_BILL_ASSISTANT.key))
           out.push(MEDICAL_BILL_ASSISTANT);
->>>>>>> c322781026ad09fc8572d8f01fb9a3a45b0e37f4
         if (mounted) setFilteredBots(out);
       } catch (err) {
         console.error("Failed to list chatbots:", err);
@@ -537,20 +523,14 @@ const renderPatientIntakeIframe = () => {
               aria-live="polite"
             >
               {botKey === LINDY_IFRAME_ASSISTANT.key ? (
-<<<<<<< HEAD
-  renderLindyIframe()
-) : botKey === PATIENT_INTAKE_IFRAME_ASSISTANT.key ? (
-  renderPatientIntakeIframe()
-) : (
-
-=======
                 renderLindyIframe()
+              ) : botKey === PATIENT_INTAKE_IFRAME_ASSISTANT.key ? (
+                renderPatientIntakeIframe()
               ) : botKey === LINDY_EMBED_ASSISTANT.key ? (
                 renderUlinkIframe()
               ) : botKey === MEDICAL_BILL_ASSISTANT.key ? (
                 renderMedicalBillIframe()
               ) : (
->>>>>>> c322781026ad09fc8572d8f01fb9a3a45b0e37f4
                 <>
                   {!botKey ? (
                     <div className="muted">Select an assistant to start.</div>
@@ -588,13 +568,9 @@ const renderPatientIntakeIframe = () => {
             </div>
 
             {botKey !== LINDY_IFRAME_ASSISTANT.key &&
-<<<<<<< HEAD
- botKey !== PATIENT_INTAKE_IFRAME_ASSISTANT.key && (
-
-=======
+              botKey !== PATIENT_INTAKE_IFRAME_ASSISTANT.key &&
               botKey !== LINDY_EMBED_ASSISTANT.key &&
               botKey !== MEDICAL_BILL_ASSISTANT.key && (
->>>>>>> c322781026ad09fc8572d8f01fb9a3a45b0e37f4
               <form className="composer" onSubmit={onSend}>
                 <div className="upload-button-wrap">
                   <ChatUploadButton
