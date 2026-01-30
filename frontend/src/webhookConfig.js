@@ -4,31 +4,31 @@ export const WEBHOOK_ASSISTANTS = {
     singlifeCall: {
         key: 'singlife-call',
         name: 'Singlife Call Assistant',
-        webhookUrl: process.env.REACT_APP_N8N_WEBHOOK_SINGLIFE || 'PLACEHOLDER_WEBHOOK_URL_1',
+        webhookUrl: process.env.REACT_APP_N8N_WEBHOOK_SINGLIFE || 'https://ulink.app.n8n.cloud/webhook/e7c1ec59-d93d-4329-926c-57f425aa2e84',
         description: 'Singlife policy enquiry and support assistant'
     },
     sgDoctor: {
         key: 'sg-doctor',
         name: 'SG Doctor Recommendation',
-        webhookUrl: process.env.REACT_APP_N8N_WEBHOOK_SG_DOCTOR || 'PLACEHOLDER_WEBHOOK_URL_2',
+        webhookUrl: process.env.REACT_APP_N8N_WEBHOOK_SG_DOCTOR || 'https://ulink.app.n8n.cloud/webhook/dea62d3b-74bc-40f9-ad5e-0e258f03b2d5',
         description: 'Singapore doctor recommendation assistant'
     },
     myDoctor: {
         key: 'my-doctor',
         name: 'MY Doctor Recommendation',
-        webhookUrl: process.env.REACT_APP_N8N_WEBHOOK_MY_DOCTOR || 'PLACEHOLDER_WEBHOOK_URL_3',
+        webhookUrl: process.env.REACT_APP_N8N_WEBHOOK_MY_DOCTOR || 'https://ulink.app.n8n.cloud/webhook/bfb72512-7cc8-4159-9bdd-474f48ff9ae1',
         description: 'Malaysia doctor recommendation assistant'
     },
     fmClinic: {
         key: 'fm-clinic',
         name: 'FM Clinic',
-        webhookUrl: process.env.REACT_APP_N8N_WEBHOOK_FM_CLINIC || 'PLACEHOLDER_WEBHOOK_URL_4',
+        webhookUrl: process.env.REACT_APP_N8N_WEBHOOK_FM_CLINIC || 'https://ulink.app.n8n.cloud/webhook/e5b1052a-9cf7-47d6-b9ed-09e54a43aa92',
         description: 'FM Clinic assistant'
     },
     allianzCso: {
         key: 'allianz-cso',
         name: 'Allianz CSO',
-        webhookUrl: process.env.REACT_APP_N8N_WEBHOOK_ALLIANZ || 'PLACEHOLDER_WEBHOOK_URL_5',
+        webhookUrl: process.env.REACT_APP_N8N_WEBHOOK_ALLIANZ || 'https://ulink.app.n8n.cloud/webhook/abeea2c1-b806-49da-b808-891c90b76ee4',
         description: 'Allianz customer service assistant'
     }
 };
