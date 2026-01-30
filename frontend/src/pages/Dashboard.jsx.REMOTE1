@@ -27,10 +27,6 @@ const LINDY_IFRAME_ASSISTANT = {
   key: "lindy-iframe",
   name: "Allianz CSO",
 };
-const PATIENT_INTAKE_IFRAME_ASSISTANT = {
-  key: "patient-intake-iframe",
-  name: "Patient Intake",
-};
 
 const LINDY_EMBED_ASSISTANT = {
   key: "lindy-embed",
@@ -94,16 +90,6 @@ export default function Dashboard() {
     }
 
     if (
-<<<<<<< HEAD
-  botKey === LINDY_IFRAME_ASSISTANT.key ||
-  botKey === PATIENT_INTAKE_IFRAME_ASSISTANT.key
-) {
-  setSessions([]);
-  setSessionId("");
-  return;
-}
-
-=======
       botKey === LINDY_IFRAME_ASSISTANT.key ||
       botKey === LINDY_EMBED_ASSISTANT.key ||
       botKey === MEDICAL_BILL_ASSISTANT.key
@@ -112,7 +98,6 @@ export default function Dashboard() {
       setSessionId("");
       return;
     }
->>>>>>> c322781026ad09fc8572d8f01fb9a3a45b0e37f4
 
     let mounted = true;
     (async () => {
@@ -138,16 +123,10 @@ export default function Dashboard() {
         const out = Array.isArray(bots) ? [...bots] : [];
         if (!out.some((b) => b.key === LINDY_IFRAME_ASSISTANT.key))
           out.push(LINDY_IFRAME_ASSISTANT);
-<<<<<<< HEAD
-        if (!out.some((b) => b.key === PATIENT_INTAKE_IFRAME_ASSISTANT.key))
-  out.push(PATIENT_INTAKE_IFRAME_ASSISTANT);
-
-=======
         if (!out.some((b) => b.key === LINDY_EMBED_ASSISTANT.key))
           out.push(LINDY_EMBED_ASSISTANT);
         if (!out.some((b) => b.key === MEDICAL_BILL_ASSISTANT.key))
           out.push(MEDICAL_BILL_ASSISTANT);
->>>>>>> c322781026ad09fc8572d8f01fb9a3a45b0e37f4
         if (mounted) setFilteredBots(out);
       } catch (err) {
         console.error("Failed to list chatbots:", err);
@@ -307,30 +286,6 @@ export default function Dashboard() {
       </div>
     );
   };
-const renderPatientIntakeIframe = () => {
-  const src = "https://ulink.app.n8n.cloud/webhook/patient-intake";
-
-  return (
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        minHeight: 520,
-        borderRadius: 12,
-        overflow: "hidden",
-        boxShadow: "0 8px 28px rgba(16,24,40,0.08)",
-      }}
-    >
-      <iframe
-        src={src}
-        width="100%"
-        height="100%"
-        style={{ border: "none", display: "block", minHeight: 520 }}
-        title="Patient Intake"
-      />
-    </div>
-  );
-};
 
   // Render the Ulink Pre-Claim Assessment AI iframe embed when that assistant is selected
   const renderUlinkIframe = () => {
@@ -537,20 +492,12 @@ const renderPatientIntakeIframe = () => {
               aria-live="polite"
             >
               {botKey === LINDY_IFRAME_ASSISTANT.key ? (
-<<<<<<< HEAD
-  renderLindyIframe()
-) : botKey === PATIENT_INTAKE_IFRAME_ASSISTANT.key ? (
-  renderPatientIntakeIframe()
-) : (
-
-=======
                 renderLindyIframe()
               ) : botKey === LINDY_EMBED_ASSISTANT.key ? (
                 renderUlinkIframe()
               ) : botKey === MEDICAL_BILL_ASSISTANT.key ? (
                 renderMedicalBillIframe()
               ) : (
->>>>>>> c322781026ad09fc8572d8f01fb9a3a45b0e37f4
                 <>
                   {!botKey ? (
                     <div className="muted">Select an assistant to start.</div>
@@ -588,13 +535,8 @@ const renderPatientIntakeIframe = () => {
             </div>
 
             {botKey !== LINDY_IFRAME_ASSISTANT.key &&
-<<<<<<< HEAD
- botKey !== PATIENT_INTAKE_IFRAME_ASSISTANT.key && (
-
-=======
               botKey !== LINDY_EMBED_ASSISTANT.key &&
               botKey !== MEDICAL_BILL_ASSISTANT.key && (
->>>>>>> c322781026ad09fc8572d8f01fb9a3a45b0e37f4
               <form className="composer" onSubmit={onSend}>
                 <div className="upload-button-wrap">
                   <ChatUploadButton
