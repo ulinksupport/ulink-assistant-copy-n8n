@@ -110,36 +110,21 @@ export default function Dashboard() {
     };
   }, [botKey]);
 
-  // load chatbots once and add webhook + iframe assistants
+  // load only webhook + iframe assistants (not from backend to avoid duplicates)
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const bots = await listChatbots();
-        const out = Array.isArray(bots) ? [...bots] : [];
+    const out = [];
 
-        // Add 5 webhook-based assistants
-        const webhookAssistants = getWebhookAssistants();
-        webhookAssistants.forEach(assistant => {
-          if (!out.some((b) => b.key === assistant.key)) {
-            out.push(assistant);
-          }
-        });
+    // Add 5 webhook-based assistants
+    const webhookAssistants = getWebhookAssistants();
+    webhookAssistants.forEach(assistant => {
+      out.push(assistant);
+    });
 
-        // Add 2 iframe assistants
-        if (!out.some((b) => b.key === LINDY_EMBED_ASSISTANT.key))
-          out.push(LINDY_EMBED_ASSISTANT);
-        if (!out.some((b) => b.key === MEDICAL_BILL_ASSISTANT.key))
-          out.push(MEDICAL_BILL_ASSISTANT);
+    // Add 2 iframe assistants
+    out.push(LINDY_EMBED_ASSISTANT);
+    out.push(MEDICAL_BILL_ASSISTANT);
 
-        if (mounted) setFilteredBots(out);
-      } catch (err) {
-        console.error("Failed to list chatbots:", err);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
+    setFilteredBots(out);
   }, []);
 
   const currentSession = useMemo(
