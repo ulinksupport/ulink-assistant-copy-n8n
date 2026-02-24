@@ -230,20 +230,52 @@ export async function createSession(assistantId) {
   const state = loadState();
   const authUser = getUser();
 
-  // Call Create Session API
-  const newSessionBE = await postNewSession({
-    assistantId,
-    userId: authUser?.id
-  });
+  let session;
 
-  const session = {
-    id: newSessionBE?.sessionId,
-    botKey: assistantId,
-    title: newSessionBE?.title,
-    messages: [],
-    createdAt: newSessionBE?.createdAt,
-    updatedAt: newSessionBE?.updatedAt
-  };
+  // For webhook-based assistants, create session locally (no backend needed)
+  if (isWebhookAssistant(assistantId)) {
+    const localId =
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    session = {
+      id: localId,
+      botKey: assistantId,
+      title: 'New Conversation',
+      messages: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Best-effort: also persist to backend (don't block on failure)
+    try {
+      const newSessionBE = await postNewSession({ assistantId, userId: authUser?.id });
+      if (newSessionBE?.sessionId) {
+        session.id = newSessionBE.sessionId;
+        session.title = newSessionBE.title || session.title;
+        session.createdAt = newSessionBE.createdAt || session.createdAt;
+        session.updatedAt = newSessionBE.updatedAt || session.updatedAt;
+      }
+    } catch (err) {
+      console.warn('Backend session creation failed (using local session):', err.message);
+    }
+  } else {
+    // Non-webhook assistants: require backend session
+    const newSessionBE = await postNewSession({
+      assistantId,
+      userId: authUser?.id
+    });
+
+    session = {
+      id: newSessionBE?.sessionId,
+      botKey: assistantId,
+      title: newSessionBE?.title,
+      messages: [],
+      createdAt: newSessionBE?.createdAt,
+      updatedAt: newSessionBE?.updatedAt
+    };
+  }
 
   state.sessions.push(session);
   saveState(state);
