@@ -23,6 +23,10 @@ import { TypingDots } from "../components/utils/TypingDots.jsx";
 import LoadingSpinner from "../components/utils/LoadingSpinner.jsx";
 import AdminPanel from "./AdminPanel.jsx";
 import { getWebhookAssistants } from "../webhookConfig.js";
+import DoctorChatWidget from "../components/DoctorChatWidget.jsx";
+
+// Keys that use the guided doctor chat widget
+const DOCTOR_KEYS = ['sg-doctor', 'my-doctor'];
 
 // Keep only 2 iframe assistants
 const LINDY_EMBED_ASSISTANT = {
@@ -443,7 +447,7 @@ export default function Dashboard() {
 
             <div
               className="chat-messages"
-              style={{ position: "relative", minHeight: 320 }}
+              style={{ position: "relative", minHeight: 320, padding: DOCTOR_KEYS.includes(botKey) ? 0 : undefined }}
               role="log"
               aria-live="polite"
             >
@@ -451,6 +455,9 @@ export default function Dashboard() {
                 renderUlinkIframe()
               ) : botKey === MEDICAL_BILL_ASSISTANT.key ? (
                 renderMedicalBillIframe()
+              ) : DOCTOR_KEYS.includes(botKey) ? (
+                /* ── Guided doctor chat widget ── */
+                <DoctorChatWidget key={botKey} botKey={botKey} />
               ) : (
                 <>
                   {!botKey ? (
@@ -489,7 +496,8 @@ export default function Dashboard() {
             </div>
 
             {botKey !== LINDY_EMBED_ASSISTANT.key &&
-              botKey !== MEDICAL_BILL_ASSISTANT.key && (
+              botKey !== MEDICAL_BILL_ASSISTANT.key &&
+              !DOCTOR_KEYS.includes(botKey) && (
                 <form className="composer" onSubmit={onSend}>
                   <div className="upload-button-wrap">
                     <ChatUploadButton
