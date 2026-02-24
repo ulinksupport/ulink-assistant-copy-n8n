@@ -10,13 +10,13 @@ export const WEBHOOK_ASSISTANTS = {
     sgDoctor: {
         key: 'sg-doctor',
         name: 'SG Doctor Recommendation',
-        webhookUrl: process.env.REACT_APP_N8N_WEBHOOK_SG_DOCTOR || 'https://ulink.app.n8n.cloud/webhook/dea62d3b-74bc-40f9-ad5e-0e258f03b2d5',
+        webhookUrl: process.env.REACT_APP_N8N_WEBHOOK_SG_DOCTOR || 'https://ulink.app.n8n.cloud/webhook/doctor-recommend',
         description: 'Singapore doctor recommendation assistant'
     },
     myDoctor: {
         key: 'my-doctor',
         name: 'MY Doctor Recommendation',
-        webhookUrl: process.env.REACT_APP_N8N_WEBHOOK_MY_DOCTOR || 'https://ulink.app.n8n.cloud/webhook/bfb72512-7cc8-4159-9bdd-474f48ff9ae1',
+        webhookUrl: process.env.REACT_APP_N8N_WEBHOOK_MY_DOCTOR || 'https://ulink.app.n8n.cloud/webhook/doctor-recommend',
         description: 'Malaysia doctor recommendation assistant'
     },
     fmClinic: {
