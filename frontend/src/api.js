@@ -407,21 +407,30 @@ async function sendWebhookMessage(botKey, sessionId, text, setIsTyping, setSessi
       throw new Error('Webhook URL not configured for this assistant.');
     }
 
-    // Prepare webhook payload
+    // Determine country based on assistant key
+    const country = botKey === 'sg-doctor' ? 'SG' : 'MY';
+
+    // Build payload matching n8n 'Validate Input' node requirements:
+    // Required: condition (the medical condition the user described)
+    // Optional: hospital, state, country
     const payload = {
+      // Map user's message to 'condition' — what n8n expects
+      condition: text,
+      message: text,           // keep for compatibility
+      hospital: '',            // user can extend this later
+      state: '',               // user can extend this later
+      country,
+      // Session context
       sessionId,
       userId,
-      message: text,
       assistantKey: botKey,
       timestamp: new Date().toISOString()
     };
 
     // Handle file attachments if any
     if (attachmentFiles && attachmentFiles.length > 0) {
-      // For webhook, we'll need to convert files to base64 or URLs
       payload.hasAttachments = true;
       payload.attachmentCount = attachmentFiles.length;
-      // TODO: Implement file upload logic if needed
     }
 
     // Call N8N webhook
@@ -439,9 +448,13 @@ async function sendWebhookMessage(botKey, sessionId, text, setIsTyping, setSessi
 
     const data = await response.json();
 
-    // Extract reply from webhook response
-    // Adjust this based on your N8N workflow response structure
-    reply = data.reply || data.message || data.response || 'Response received from assistant.';
+    // Extract reply — n8n workflow returns 'formatted_text' as the main response
+    reply = data.formatted_text
+      || data.reply
+      || data.message
+      || data.response
+      || (data.recommendations ? JSON.stringify(data.recommendations, null, 2) : null)
+      || 'Response received from assistant.';
 
   } catch (error) {
     console.error('Webhook error:', error);
@@ -455,6 +468,7 @@ async function sendWebhookMessage(botKey, sessionId, text, setIsTyping, setSessi
 
   return reply;
 }
+
 
 export async function doExportChat(sessionId) {
   await doDownloadChatHistReport(sessionId);
