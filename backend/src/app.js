@@ -12,19 +12,38 @@ const { CORS_ALLOW_ORIGIN } = require('./config.js');
 
 
 const app = express();
-app.use(express.json());            
-app.use(morgan('dev'));    
+app.use(express.json());
+app.use(morgan('dev'));
 
 // -------- CORS: allow your Vite origins ----------
-const allowed = (CORS_ALLOW_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean);
+// Always include the deployed frontend URL; supplement with comma-separated CORS_ALLOW_ORIGIN env var
+const ALWAYS_ALLOWED = [
+  'https://ulink-assistant-copy-n8n.onrender.com',
+  'http://localhost:5173',
+  'http://localhost:3000',
+];
+const envAllowed = (CORS_ALLOW_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean);
+const allowed = [...new Set([...ALWAYS_ALLOWED, ...envAllowed])];
+
 app.use(cors({
   origin: (origin, cb) => {
-    cb(null, !origin || allowed.includes(origin))
+    // Allow requests with no origin (mobile apps, curl, Postman) or matching origins
+    if (!origin || allowed.includes(origin)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`CORS blocked: ${origin}`));
+    }
   },
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-app.options('*', cors());
+app.options('*', cors({
+  origin: (origin, cb) => cb(null, !origin || allowed.includes(origin)),
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 
 // Define API Routes in here
