@@ -52,21 +52,18 @@ function renderDoctorCards(data) {
         <div className="doc-card" key={i}>
             <div className="rec-label">Recommendation {r.recommendation_number || i + 1}</div>
             <div className="doc-name">{r.doctor_name}</div>
-            <div className="doc-hospital">{r.location}</div>
+            <div className="doc-hospital">{r.hospital}</div>
             <table>
                 <tbody>
                     <tr><td>Condition</td>    <td>{r.medical_condition}</td></tr>
+                    <tr><td>Type</td>         <td>{r.type}</td></tr>
                     <tr><td>Specialty</td>    <td>{r.specialty}</td></tr>
-                    {r.languages && <tr><td>Languages</td>  <td>{r.languages}</td></tr>}
-                    {r.diagnoses && <tr><td>Diagnoses</td>  <td>{r.diagnoses}</td></tr>}
-                    {r.procedures && <tr><td>Procedures</td> <td>{r.procedures}</td></tr>}
-                    {r.experience && <tr><td>Experience</td> <td>{r.experience}</td></tr>}
+                    {r.sub_specialty && <tr><td>Sub-specialty</td><td>{r.sub_specialty}</td></tr>}
+                    <tr><td>Hospital</td>     <td>{r.hospital}</td></tr>
                     <tr><td>Location</td>     <td>{r.location}</td></tr>
-                    {r.website && (
-                        <tr><td>Website</td>
-                            <td dangerouslySetInnerHTML={{ __html: linkify(r.website) }} />
-                        </tr>
-                    )}
+                    <tr><td>Website</td>
+                        <td dangerouslySetInnerHTML={{ __html: linkify(r.website) }} />
+                    </tr>
                 </tbody>
             </table>
             {r.source_row && <div className="source-badge">Database Row {r.source_row}</div>}
