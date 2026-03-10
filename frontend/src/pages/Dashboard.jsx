@@ -457,7 +457,12 @@ export default function Dashboard() {
                 renderMedicalBillIframe()
               ) : DOCTOR_KEYS.includes(botKey) ? (
                 /* ── Guided doctor chat widget ── */
-                <DoctorChatWidget key={botKey} botKey={botKey} />
+                <DoctorChatWidget
+                  key={botKey}
+                  botKey={botKey}
+                  sessionId={sessionId || null}
+                  onSessionCreated={(newSessions) => setSessions(newSessions || [])}
+                />
               ) : (
                 <>
                   {!botKey ? (

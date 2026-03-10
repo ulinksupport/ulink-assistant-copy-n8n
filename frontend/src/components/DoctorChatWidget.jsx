@@ -1,7 +1,9 @@
 // src/components/DoctorChatWidget.jsx
 // Guided multi-step doctor recommendation chat — mirrors the n8n.html flow
+// Supports history: saves conversations to localStorage, reads them back when sessionId is provided
 import React, { useEffect, useRef, useState } from 'react';
 import { getWebhookUrl } from '../webhookConfig';
+import { createSession, appendMessage, getSession, listSessions } from '../api';
 import './DoctorChatWidget.css';
 
 // ── Location / hospital data ─────────────────────────────────────────────────
@@ -14,9 +16,7 @@ const MY_STATES = [
     { label: '6. Unsure', value: 'Unsure' },
 ];
 
-const SG_STATES = [
-    { label: 'Singapore', value: 'Singapore' },
-];
+const SG_STATES = [{ label: 'Singapore', value: 'Singapore' }];
 
 const MY_HOSPITALS = {
     'Penang': ['Pantai Hospital Penang', 'Sunway Medical Penang', 'Not Listed'],
@@ -30,7 +30,7 @@ const SG_HOSPITALS = {
         'Singapore General Hospital', 'National University Hospital', 'Not Listed'],
 };
 
-// ── Helper ───────────────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 function escHtml(s) {
     return String(s || '')
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -43,7 +43,7 @@ function linkify(url) {
     return `<a href="${safe}" target="_blank" rel="noopener noreferrer">${safe}</a>`;
 }
 
-// ── Message renderer ─────────────────────────────────────────────────────────
+// ── Doctor cards ─────────────────────────────────────────────────────────────
 function renderDoctorCards(data) {
     const recs = data.recommendations || [];
     if (recs.length === 0) return null;
@@ -53,25 +53,23 @@ function renderDoctorCards(data) {
             <div className="rec-label">Recommendation {r.recommendation_number || i + 1}</div>
             <div className="doc-name">{r.doctor_name}</div>
             <div className="doc-hospital">{r.hospital}</div>
-            <table>
-                <tbody>
-                    <tr><td>Condition</td>    <td>{r.medical_condition}</td></tr>
-                    <tr><td>Type</td>         <td>{r.type}</td></tr>
-                    <tr><td>Specialty</td>    <td>{r.specialty}</td></tr>
-                    {r.sub_specialty && <tr><td>Sub-specialty</td><td>{r.sub_specialty}</td></tr>}
-                    <tr><td>Hospital</td>     <td>{r.hospital}</td></tr>
-                    <tr><td>Location</td>     <td>{r.location}</td></tr>
-                    <tr><td>Website</td>
-                        <td dangerouslySetInnerHTML={{ __html: linkify(r.website) }} />
-                    </tr>
-                </tbody>
-            </table>
+            <table><tbody>
+                <tr><td>Condition</td>  <td>{r.medical_condition}</td></tr>
+                <tr><td>Type</td>       <td>{r.type}</td></tr>
+                <tr><td>Specialty</td>  <td>{r.specialty}</td></tr>
+                {r.sub_specialty && <tr><td>Sub-specialty</td><td>{r.sub_specialty}</td></tr>}
+                <tr><td>Hospital</td>   <td>{r.hospital}</td></tr>
+                <tr><td>Location</td>   <td>{r.location}</td></tr>
+                <tr><td>Website</td>
+                    <td dangerouslySetInnerHTML={{ __html: linkify(r.website) }} />
+                </tr>
+            </tbody></table>
             {r.source_row && <div className="source-badge">Database Row {r.source_row}</div>}
         </div>
     ));
 }
 
-// ── Main bubble component ────────────────────────────────────────────────────
+// ── Bubble ────────────────────────────────────────────────────────────────────
 function Bubble({ msg }) {
     if (msg.type === 'typing') {
         return (
@@ -85,21 +83,45 @@ function Bubble({ msg }) {
     }
 
     const isBot = msg.role === 'bot';
+
+    // Try to parse saved card data (stored as JSON string in history)
+    let cardData = msg.cards;
+    if (!cardData && msg.content) {
+        try {
+            const parsed = JSON.parse(msg.content);
+            if (parsed && parsed.__doctorCards) cardData = parsed;
+        } catch (_) { /* not JSON */ }
+    }
+
+    // Derive display text
+    const displayText = msg.text || msg.content || '';
+
     return (
         <div className={`dc-msg ${isBot ? 'bot' : 'user'}`}>
             <div className="dc-avatar">{isBot ? 'U' : 'A'}</div>
             <div className="dc-bubble">
                 {msg.html
                     ? <div dangerouslySetInnerHTML={{ __html: msg.html }} />
-                    : <p>{msg.text}</p>}
-                {msg.cards && <div className="dc-cards">{renderDoctorCards(msg.cards)}</div>}
+                    : displayText && <p>{displayText}</p>}
+                {cardData && <div className="dc-cards">{renderDoctorCards(cardData)}</div>}
+                {msg.createdAt && (
+                    <div style={{ fontSize: 11, opacity: 0.5, marginTop: 4 }}>
+                        {new Date(msg.createdAt).toLocaleString()}
+                    </div>
+                )}
             </div>
         </div>
     );
 }
 
 // ── Main widget ───────────────────────────────────────────────────────────────
-export default function DoctorChatWidget({ botKey }) {
+/**
+ * Props:
+ *   botKey          — 'sg-doctor' | 'my-doctor'
+ *   sessionId       — if set, show that historical session (read-only)
+ *   onSessionCreated(sessions) — called after a new session is saved so sidebar refreshes
+ */
+export default function DoctorChatWidget({ botKey, sessionId, onSessionCreated }) {
     const isSG = botKey === 'sg-doctor';
     const country = isSG ? 'SG' : 'MY';
     const STATES = isSG ? SG_STATES : MY_STATES;
@@ -109,62 +131,120 @@ export default function DoctorChatWidget({ botKey }) {
     const [quickReplies, setReplies] = useState([]);
     const [showInput, setShowInput] = useState(false);
     const [inputVal, setInputVal] = useState('');
-    const [inputPlaceholder, setInputPlaceholder] = useState('Type your response…');
-    const [step, setStep] = useState(1); // 1=location 2=condition 3=done
+    const [inputPlaceholder, setPlaceholder] = useState('Type your response…');
+    const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
+    const [isHistory, setIsHistory] = useState(false); // read-only mode
 
     const flowState = useRef({ selectedState: '', selectedHospital: '', condition: '' });
     const pendingStep = useRef('');
+    const activeSessionId = useRef(null); // sessionId in use for saving
     const endRef = useRef(null);
     const inputRef = useRef(null);
 
-    // auto-scroll
+    // Auto-scroll
     useEffect(() => {
         endRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, quickReplies]);
 
-    // start flow on mount / when botKey changes
+    // When sessionId prop changes: show history or start fresh
     useEffect(() => {
-        resetFlow();
+        if (sessionId) {
+            loadHistorySession(sessionId);
+        } else {
+            setIsHistory(false);
+            resetFlow();
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [botKey]);
+    }, [sessionId, botKey]);
 
-    // ── Flow helpers ────────────────────────────────────────────────────────────
+    // ── History mode: load a past conversation ────────────────────────────────
+    function loadHistorySession(sid) {
+        const session = getSession(sid);
+        if (!session) { resetFlow(); return; }
+
+        setIsHistory(true);
+        setReplies([]);
+        setShowInput(false);
+        setStep(3);
+
+        // Map stored messages → display format
+        const msgs = (session.messages || []).map((m, i) => {
+            // Check if content is doctor-card JSON
+            let text = m.content || '';
+            let cards = null;
+            let html = null;
+            try {
+                const parsed = JSON.parse(m.content);
+                if (parsed && parsed.__doctorCards) {
+                    cards = parsed;
+                    text = '';
+                }
+            } catch (_) { /* plain text */ }
+
+            return {
+                id: m.id || `hist-${i}`,
+                role: m.role === 'user' ? 'user' : 'bot',
+                text,
+                html,
+                cards,
+                createdAt: m.createdAt,
+            };
+        });
+
+        setMessages(msgs);
+    }
+
+    // ── Flow helpers ─────────────────────────────────────────────────────────
     function addBotMsg(text, extra = {}) {
-        setMessages(prev => [...prev, { role: 'bot', text, ...extra, id: Date.now() + Math.random() }]);
+        const msg = { role: 'bot', text, ...extra, id: Date.now() + Math.random() };
+        setMessages(prev => [...prev, msg]);
+        // Save to session if active
+        if (activeSessionId.current) {
+            appendMessage(activeSessionId.current, 'assistant', text);
+        }
     }
 
     function addUserMsg(text) {
-        setMessages(prev => [...prev, { role: 'user', text, id: Date.now() + Math.random() }]);
+        const msg = { role: 'user', text, id: Date.now() + Math.random() };
+        setMessages(prev => [...prev, msg]);
+        if (activeSessionId.current) {
+            appendMessage(activeSessionId.current, 'user', text);
+        }
     }
 
-    function showQuickReplies(options) {
-        setReplies(options);
-        setShowInput(false);
-        setInputVal('');
-    }
-
+    function showQuickReplies(options) { setReplies(options); setShowInput(false); setInputVal(''); }
     function showTextInput(placeholder) {
-        setReplies([]);
-        setShowInput(true);
-        setInputPlaceholder(placeholder || 'Type your response…');
+        setReplies([]); setShowInput(true); setPlaceholder(placeholder || 'Type your response…');
         setTimeout(() => inputRef.current?.focus(), 100);
     }
+    function hide() { setReplies([]); setShowInput(false); }
 
-    function hide() {
-        setReplies([]);
-        setShowInput(false);
-    }
-
-    // ── Conversation steps ──────────────────────────────────────────────────────
-    function resetFlow() {
+    // ── Conversation flow ─────────────────────────────────────────────────────
+    async function resetFlow() {
         flowState.current = { selectedState: '', selectedHospital: '', condition: '' };
         pendingStep.current = '';
+        activeSessionId.current = null;
         setMessages([]);
         setReplies([]);
         setShowInput(false);
         setInputVal('');
         setStep(1);
+        setIsHistory(false);
+
+        // Create a new session in localStorage so it appears in History sidebar
+        try {
+            const session = await createSession(botKey);
+            activeSessionId.current = session.id;
+            // Notify parent to refresh History list
+            if (onSessionCreated) {
+                const sessions = await listSessions(botKey);
+                onSessionCreated(sessions);
+            }
+        } catch (err) {
+            console.warn('Could not create session for doctor chat:', err.message);
+        }
+
         setTimeout(() => {
             addBotMsg(`Hello! I'm the Ulink ${isSG ? 'SG' : 'MY'} Doctor Recommendation Assistant. I'll help you find the right specialist.`);
             setTimeout(askState, 600);
@@ -174,7 +254,6 @@ export default function DoctorChatWidget({ botKey }) {
     function askState() {
         setStep(1);
         if (isSG) {
-            // SG: only one state, skip directly to hospital question
             flowState.current.selectedState = 'Singapore';
             setTimeout(askHospitalYesNo, 400);
         } else {
@@ -205,7 +284,8 @@ export default function DoctorChatWidget({ botKey }) {
         if (val === 'yes') {
             const stateName = flowState.current.selectedState;
             const opts = (HOSPITALS[stateName] || []).map(h => ({ label: h, value: h }));
-            addBotMsg(`Please select a hospital in <strong>${escHtml(stateName)}</strong>:`, { html: `Please select a hospital in <strong>${escHtml(stateName)}</strong>:` });
+            addBotMsg(`Please select a hospital in ${stateName}:`,
+                { html: `Please select a hospital in <strong>${escHtml(stateName)}</strong>:` });
             showQuickReplies(opts);
             pendingStep.current = 'hospital-pick';
         } else {
@@ -234,7 +314,7 @@ export default function DoctorChatWidget({ botKey }) {
         }, 300);
     }
 
-    // ── Send handler ─────────────────────────────────────────────────────────────
+    // ── Send ──────────────────────────────────────────────────────────────────
     function handleSend() {
         const val = inputVal.trim();
         if (!val) return;
@@ -255,29 +335,22 @@ export default function DoctorChatWidget({ botKey }) {
     function handleQuickReply(opt) {
         addUserMsg(opt.label || opt.value);
         hide();
-
         const ps = pendingStep.current;
         pendingStep.current = '';
 
-        if (!ps || ps === '' || ps === undefined) {
-            // state selection
-            handleStateChoice(opt.value);
-        } else if (ps === 'hospital-yn') {
-            handleHospitalYN(opt.value);
-        } else if (ps === 'hospital-pick') {
-            handleHospitalPick(opt.value);
-        } else if (ps === 'done-choice') {
+        if (!ps) handleStateChoice(opt.value);
+        else if (ps === 'hospital-yn') handleHospitalYN(opt.value);
+        else if (ps === 'hospital-pick') handleHospitalPick(opt.value);
+        else if (ps === 'done-choice') {
             if (opt.value === 'restart') resetFlow();
             else askCondition();
         }
     }
 
-    // ── Webhook call ─────────────────────────────────────────────────────────────
+    // ── Webhook call ──────────────────────────────────────────────────────────
     async function fetchRecommendation(condition) {
         setStep(3);
         setLoading(true);
-
-        // add typing indicator
         const typingId = Date.now();
         setMessages(prev => [...prev, { type: 'typing', id: typingId }]);
 
@@ -295,17 +368,14 @@ export default function DoctorChatWidget({ botKey }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             });
-
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
 
-            // remove typing
             setMessages(prev => prev.filter(m => m.id !== typingId));
-
             displayRecommendations(data, condition);
         } catch (err) {
             setMessages(prev => prev.filter(m => m.id !== typingId));
-            addBotMsg(`⚠️ Sorry, I couldn't connect to the recommendation service. Please try again.\nError: ${err.message}`);
+            addBotMsg(`⚠️ Sorry, I couldn't connect to the recommendation service.\nError: ${err.message}`);
             setTimeout(() => {
                 showQuickReplies([{ label: '🔄 Start New Search', value: 'restart' }]);
                 pendingStep.current = 'done-choice';
@@ -332,12 +402,14 @@ export default function DoctorChatWidget({ botKey }) {
             addBotMsg(`✅ Identified specialty: ${data.ai_specialty} (${data.ai_type})`);
         }
 
-        // render doctor cards
+        // Save card data as JSON so it survives in history
+        const cardJson = JSON.stringify({ ...data, __doctorCards: true });
+        if (activeSessionId.current) {
+            appendMessage(activeSessionId.current, 'assistant', cardJson);
+        }
+
         setMessages(prev => [...prev, {
-            role: 'bot',
-            text: '',
-            cards: data,
-            id: Date.now(),
+            role: 'bot', text: '', cards: data, id: Date.now(),
         }]);
 
         setTimeout(() => {
@@ -352,10 +424,15 @@ export default function DoctorChatWidget({ botKey }) {
                 showQuickReplies([{ label: '🔄 New Recommendation', value: 'restart' }]);
             }
             pendingStep.current = 'done-choice';
+
+            // Refresh history sidebar after saving
+            if (onSessionCreated) {
+                listSessions(botKey).then(sessions => onSessionCreated(sessions)).catch(() => { });
+            }
         }, 500);
     }
 
-    // ── Render ───────────────────────────────────────────────────────────────────
+    // ── Render ────────────────────────────────────────────────────────────────
     const stepLabel = { 1: 'Step 1 — Location', 2: 'Step 2 — Condition', 3: 'Step 3 — Results' };
 
     return (
@@ -365,7 +442,18 @@ export default function DoctorChatWidget({ botKey }) {
                 {[1, 2, 3].map(n => (
                     <div key={n} className={`dc-dot ${n < step ? 'done' : n === step ? 'active' : ''}`} />
                 ))}
-                <span className="dc-step-label">{stepLabel[step]}</span>
+                <span className="dc-step-label">
+                    {isHistory ? '📋 History View' : stepLabel[step]}
+                </span>
+                {isHistory && (
+                    <button
+                        className="dc-qr-btn"
+                        style={{ marginLeft: 'auto', fontSize: 11 }}
+                        onClick={() => { activeSessionId.current = null; resetFlow(); }}
+                    >
+                        🔄 New Search
+                    </button>
+                )}
             </div>
 
             {/* Messages */}
@@ -374,43 +462,44 @@ export default function DoctorChatWidget({ botKey }) {
                 <div ref={endRef} />
             </div>
 
-            {/* Input area */}
-            <div className="dc-input-area">
-                {quickReplies.length > 0 && (
-                    <div className="dc-quick-replies">
-                        {quickReplies.map(opt => (
+            {/* Input area — hidden in history mode */}
+            {!isHistory && (
+                <div className="dc-input-area">
+                    {quickReplies.length > 0 && (
+                        <div className="dc-quick-replies">
+                            {quickReplies.map(opt => (
+                                <button
+                                    key={opt.value}
+                                    className="dc-qr-btn"
+                                    onClick={() => handleQuickReply(opt)}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                    {showInput && (
+                        <div className="dc-text-row">
+                            <input
+                                ref={inputRef}
+                                className="dc-text-input"
+                                value={inputVal}
+                                placeholder={inputPlaceholder}
+                                onChange={e => setInputVal(e.target.value)}
+                                onKeyDown={e => { if (e.key === 'Enter') handleSend(); }}
+                                disabled={loading}
+                            />
                             <button
-                                key={opt.value}
-                                className="dc-qr-btn"
-                                onClick={() => handleQuickReply(opt)}
+                                className="dc-send-btn"
+                                onClick={handleSend}
+                                disabled={!inputVal.trim() || loading}
                             >
-                                {opt.label}
+                                <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z" /></svg>
                             </button>
-                        ))}
-                    </div>
-                )}
-
-                {showInput && (
-                    <div className="dc-text-row">
-                        <input
-                            ref={inputRef}
-                            className="dc-text-input"
-                            value={inputVal}
-                            placeholder={inputPlaceholder}
-                            onChange={e => setInputVal(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter') handleSend(); }}
-                            disabled={loading}
-                        />
-                        <button
-                            className="dc-send-btn"
-                            onClick={handleSend}
-                            disabled={!inputVal.trim() || loading}
-                        >
-                            <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z" /></svg>
-                        </button>
-                    </div>
-                )}
-            </div>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
