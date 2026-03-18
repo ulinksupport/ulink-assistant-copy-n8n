@@ -31,7 +31,7 @@ const DOCTOR_KEYS = ['sg-doctor', 'my-doctor'];
 // Keep only 2 iframe assistants
 const LINDY_EMBED_ASSISTANT = {
   key: "lindy-embed",
-  name: "Ulink Pre-Claim Assessment AI",
+  name: "Ulink Pre-Claim Assessment Engine",
 };
 
 const MEDICAL_BILL_ASSISTANT = {
@@ -254,8 +254,7 @@ export default function Dashboard() {
 
   // Render the Ulink Pre-Claim Assessment AI iframe embed when that assistant is selected
   const renderUlinkIframe = () => {
-    const src =
-      "https://chat.lindy.ai/embedded/lindyEmbed/56be8e4f-7ef5-4064-b2b4-43391726e566";
+    const src = "https://preclaim-custom-gpt.onrender.com/";
 
     return (
       <div
