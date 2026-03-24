@@ -39,6 +39,11 @@ const MEDICAL_BILL_ASSISTANT = {
   name: "Medical Bill Analysis Agent",
 };
 
+const HR_CLAIM_ASSISTANT = {
+  key: "hr-claim",
+  name: "HR Related (Claim)",
+};
+
 export default function Dashboard() {
   const navigate = useNavigate();
   useEffect(() => {
@@ -92,7 +97,8 @@ export default function Dashboard() {
 
     if (
       botKey === LINDY_EMBED_ASSISTANT.key ||
-      botKey === MEDICAL_BILL_ASSISTANT.key
+      botKey === MEDICAL_BILL_ASSISTANT.key ||
+      botKey === HR_CLAIM_ASSISTANT.key
     ) {
       setSessions([]);
       setSessionId("");
@@ -124,9 +130,10 @@ export default function Dashboard() {
       out.push(assistant);
     });
 
-    // Add 2 iframe assistants
+    // Add iframe assistants
     out.push(LINDY_EMBED_ASSISTANT);
     out.push(MEDICAL_BILL_ASSISTANT);
+    out.push(HR_CLAIM_ASSISTANT);
 
     setFilteredBots(out);
   }, []);
@@ -144,7 +151,8 @@ export default function Dashboard() {
     if (
       !botKey ||
       botKey === LINDY_EMBED_ASSISTANT.key ||
-      botKey === MEDICAL_BILL_ASSISTANT.key
+      botKey === MEDICAL_BILL_ASSISTANT.key ||
+      botKey === HR_CLAIM_ASSISTANT.key
     )
       return;
     setLoading(true);
@@ -307,6 +315,32 @@ export default function Dashboard() {
     );
   };
 
+  // Render the HR Related (Claim) iframe embed when that assistant is selected
+  const renderHrClaimIframe = () => {
+    const src = "https://oil-8b06.onrender.com";
+    return (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          minHeight: 520,
+          borderRadius: 12,
+          overflow: "hidden",
+          boxShadow: "0 8px 28px rgba(16,24,40,0.08)",
+        }}
+      >
+        <iframe
+          key={iframeRefreshKey}
+          src={src}
+          width="100%"
+          height="100%"
+          style={{ border: "none", display: "block", minHeight: 520 }}
+          title="HR Related (Claim)"
+        />
+      </div>
+    );
+  };
+
   return (
     <div className="console-page">
       <div className="console-wrap">
@@ -454,6 +488,8 @@ export default function Dashboard() {
                 renderUlinkIframe()
               ) : botKey === MEDICAL_BILL_ASSISTANT.key ? (
                 renderMedicalBillIframe()
+              ) : botKey === HR_CLAIM_ASSISTANT.key ? (
+                renderHrClaimIframe()
               ) : DOCTOR_KEYS.includes(botKey) ? (
                 /* ── Guided doctor chat widget ── */
                 <DoctorChatWidget
