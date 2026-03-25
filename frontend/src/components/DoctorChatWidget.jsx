@@ -245,17 +245,15 @@ export default function DoctorChatWidget({ botKey, sessionId, onSessionCreated }
             console.warn('Could not create session for doctor chat:', err.message);
         }
 
-        setTimeout(() => {
-            addBotMsg(`Hello! I'm the Ulink ${isSG ? 'SG' : 'MY'} Doctor Recommendation Assistant. I'll help you find the right specialist.`);
-            setTimeout(askState, 600);
-        }, 300);
+        addBotMsg(`Hello! I'm the Ulink ${isSG ? 'SG' : 'MY'} Doctor Recommendation Assistant. I'll help you find the right specialist.`);
+        askState();
     }
 
     function askState() {
         setStep(1);
         if (isSG) {
             flowState.current.selectedState = 'Singapore';
-            setTimeout(askHospitalYesNo, 400);
+            askHospitalYesNo();
         } else {
             addBotMsg('Which state does the patient need a doctor in?');
             showQuickReplies(STATES.map(s => ({ label: s.label, value: s.value })));
@@ -267,7 +265,7 @@ export default function DoctorChatWidget({ botKey, sessionId, onSessionCreated }
         if (val === 'Unsure' || !HOSPITALS[val]) {
             askCondition();
         } else {
-            setTimeout(askHospitalYesNo, 400);
+            askHospitalYesNo();
         }
     }
 
@@ -306,12 +304,9 @@ export default function DoctorChatWidget({ botKey, sessionId, onSessionCreated }
     }
 
     function askCondition() {
-        setStep(2);
-        setTimeout(() => {
-            addBotMsg("What is the patient's medical condition or required procedure?");
-            showTextInput('e.g. heart attack, knee replacement, breast cancer…');
-            pendingStep.current = 'condition';
-        }, 300);
+        addBotMsg("What is the patient's medical condition or required procedure?");
+        showTextInput('e.g. heart attack, knee replacement, breast cancer…');
+        pendingStep.current = 'condition';
     }
 
     // ── Send ──────────────────────────────────────────────────────────────────
@@ -376,10 +371,8 @@ export default function DoctorChatWidget({ botKey, sessionId, onSessionCreated }
         } catch (err) {
             setMessages(prev => prev.filter(m => m.id !== typingId));
             addBotMsg(`⚠️ Sorry, I couldn't connect to the recommendation service.\nError: ${err.message}`);
-            setTimeout(() => {
-                showQuickReplies([{ label: '🔄 Start New Search', value: 'restart' }]);
-                pendingStep.current = 'done-choice';
-            }, 500);
+            showQuickReplies([{ label: '🔄 Start New Search', value: 'restart' }]);
+            pendingStep.current = 'done-choice';
         } finally {
             setLoading(false);
         }
@@ -412,24 +405,22 @@ export default function DoctorChatWidget({ botKey, sessionId, onSessionCreated }
             role: 'bot', text: '', cards: data, id: Date.now(),
         }]);
 
-        setTimeout(() => {
-            if (recs.length === 1) {
-                addBotMsg('I only found 1 doctor recommendation. Would you like to look for more?');
-                showQuickReplies([
-                    { label: '🔍 Try Another Condition', value: 'condition' },
-                    { label: '🔄 Start Over', value: 'restart' },
-                ]);
-            } else {
-                addBotMsg('Here are your doctor recommendations! ⚠️ Please verify each link before sharing with the member.');
-                showQuickReplies([{ label: '🔄 New Recommendation', value: 'restart' }]);
-            }
-            pendingStep.current = 'done-choice';
+        if (recs.length === 1) {
+            addBotMsg('I only found 1 doctor recommendation. Would you like to look for more?');
+            showQuickReplies([
+                { label: '🔍 Try Another Condition', value: 'condition' },
+                { label: '🔄 Start Over', value: 'restart' },
+            ]);
+        } else {
+            addBotMsg('Here are your doctor recommendations! ⚠️ Please verify each link before sharing with the member.');
+            showQuickReplies([{ label: '🔄 New Recommendation', value: 'restart' }]);
+        }
+        pendingStep.current = 'done-choice';
 
-            // Refresh history sidebar after saving
-            if (onSessionCreated) {
-                listSessions(botKey).then(sessions => onSessionCreated(sessions)).catch(() => { });
-            }
-        }, 500);
+        // Refresh history sidebar after saving
+        if (onSessionCreated) {
+            listSessions(botKey).then(sessions => onSessionCreated(sessions)).catch(() => { });
+        }
     }
 
     // ── Render ────────────────────────────────────────────────────────────────
