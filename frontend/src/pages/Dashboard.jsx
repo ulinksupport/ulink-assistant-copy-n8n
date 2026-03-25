@@ -260,29 +260,70 @@ export default function Dashboard() {
   const btnSendDisabled =
     !botKey || !sessionId || (!input.trim() && attachments?.length === 0);
 
-  // Render the Ulink Pre-Claim Assessment AI iframe embed when that assistant is selected
+  // Render the Ulink Pre-Claim Assessment Engine launcher card
   const renderUlinkIframe = () => {
-    const src = "https://preclaim-custom-gpt.onrender.com/";
-
+    const url = "https://preclaim-custom-gpt.onrender.com/";
     return (
       <div
         style={{
           width: "100%",
           height: "100%",
           minHeight: 520,
-          borderRadius: 12,
-          overflow: "hidden",
-          boxShadow: "0 8px 28px rgba(16,24,40,0.08)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 24,
+          padding: "40px 24px",
+          background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+          borderRadius: 16,
+          boxShadow: "0 8px 28px rgba(16,24,40,0.12)",
         }}
       >
-        <iframe
-          key={iframeRefreshKey}
-          src={src}
-          width="100%"
-          height="100%"
-          style={{ border: "none", display: "block", minHeight: 520 }}
-          title="Ulink Pre-Claim Assessment AI Embed"
-        />
+        {/* Icon */}
+        <div style={{
+          width: 72, height: 72, borderRadius: "50%",
+          background: "linear-gradient(135deg, #f97316, #ea580c)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 32, boxShadow: "0 8px 24px rgba(249,115,22,0.4)"
+        }}>
+          🩺
+        </div>
+
+        {/* Title */}
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 22, fontWeight: 700, color: "#f1f5f9", marginBottom: 8 }}>
+            Ulink Pre-Claim Assessment Engine
+          </div>
+          <div style={{ fontSize: 14, color: "#94a3b8", maxWidth: 400 }}>
+            Upload medical documents or enter case details — AI generates a full assessment with
+            internal summary, client report, and email template.
+          </div>
+        </div>
+
+        {/* Launch button */}
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 10,
+            padding: "14px 32px", borderRadius: 10,
+            background: "linear-gradient(135deg, #f97316, #ea580c)",
+            color: "#fff", fontWeight: 700, fontSize: 16,
+            textDecoration: "none",
+            boxShadow: "0 4px 16px rgba(249,115,22,0.4)",
+            transition: "transform 0.15s, box-shadow 0.15s",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(249,115,22,0.5)"; }}
+          onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 4px 16px rgba(249,115,22,0.4)"; }}
+        >
+          🚀 Open Pre-Claim Engine
+        </a>
+
+        <div style={{ fontSize: 12, color: "#475569" }}>
+          Opens in a new tab — file upload and AI analysis work fully there
+        </div>
       </div>
     );
   };
