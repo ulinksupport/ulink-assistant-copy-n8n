@@ -377,7 +377,7 @@ export default function Dashboard() {
                   disabled={
                     !botKey ||
                     botKey === LINDY_EMBED_ASSISTANT.key ||
-                    botKey === MEDICAL_BILL_ASSISTANT.key
+                    botKey === HR_CLAIM_ASSISTANT.key
                   }
                   onClick={onNewChat}
                 >
