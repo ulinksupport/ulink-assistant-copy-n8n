@@ -16,7 +16,7 @@ export const WEBHOOK_ASSISTANTS = {
     myDoctor: {
         key: 'my-doctor',
         name: 'MY Doctor Recommendation',
-        webhookUrl: process.env.REACT_APP_N8N_WEBHOOK_MY_DOCTOR || 'https://ulink.app.n8n.cloud/webhook/doctor-recommend',
+        webhookUrl: process.env.REACT_APP_N8N_WEBHOOK_MY_DOCTOR || 'https://ulink.app.n8n.cloud/webhook/doctor-recommend-my',
         description: 'Malaysia doctor recommendation assistant'
     },
     fmClinic: {

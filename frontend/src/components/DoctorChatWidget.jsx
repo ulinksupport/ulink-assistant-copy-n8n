@@ -19,10 +19,27 @@ const MY_STATES = [
 const SG_STATES = [{ label: 'Singapore', value: 'Singapore' }];
 
 const MY_HOSPITALS = {
-    'Penang': ['Pantai Hospital Penang', 'Sunway Medical Penang', 'Not Listed'],
-    'Kuala Lumpur': ['Cardiac Vascular Sentral KL', 'Gleneagles KL', 'Hospital Picaso',
-        'Pantai Hospital KL', 'Prince Court Medical Centre', 'Sunway Medical KL', 'Not Listed'],
-    'Selangor': ['Sunway Medical Centre Selangor', 'Thomson Hospital Kota Damansara', 'Not Listed'],
+    'Penang': [
+        'Pantai Hospital Penang',
+        'Sunway Medical Penang',
+        'Not Listed',
+    ],
+    'Kuala Lumpur': [
+        'Cardiac Vascular Sentral Kuala Lumpur',
+        'Gleneagles Kuala Lumpur Hospital',
+        'Hospital Picaso',
+        'Pantai Hospital Kuala Lumpur',
+        'Prince Court Medical Centre',
+        'Sunway Medical Kuala Lumpur',
+        'Not Listed',
+    ],
+    'Selangor': [
+        'Sunway Medical Centre Selangor',
+        'Thomson Hospital Kota Damansara',
+        'Not Listed',
+    ],
+    'Malacca': ['Not Listed'],
+    'Johor':   ['Not Listed'],
 };
 
 const SG_HOSPITALS = {
@@ -336,9 +353,21 @@ export default function DoctorChatWidget({ botKey, sessionId, onSessionCreated }
         if (!ps) handleStateChoice(opt.value);
         else if (ps === 'hospital-yn') handleHospitalYN(opt.value);
         else if (ps === 'hospital-pick') handleHospitalPick(opt.value);
-        else if (ps === 'done-choice') {
+        else if (ps === 'done-choice' || ps === 'qn5-choice' || ps === 'qn6-choice') {
             if (opt.value === 'restart') resetFlow();
-            else askCondition();
+            else if (opt.value === 'condition') askCondition();
+            else if (opt.value === 'another-hosp') {
+                // Clear selected hospital to trigger Case 3 (another hospital) and refetch
+                flowState.current.selectedHospital = '';
+                fetchRecommendation(flowState.current.condition);
+            }
+            else if (opt.value === 'internet') {
+                addBotMsg(`Okay, please search the Internet for a doctor in the same specialty, from the same hospital / location.`);
+                showQuickReplies([
+                    { label: '🔄 Start New Search', value: 'restart' }
+                ]);
+                pendingStep.current = 'done-choice';
+            }
         }
     }
 
@@ -382,12 +411,14 @@ export default function DoctorChatWidget({ botKey, sessionId, onSessionCreated }
         const recs = data.recommendations || [];
 
         if (!data || data.outcome === 'not_found' || recs.length === 0) {
-            addBotMsg(`I can't find doctor recommendations for "${condition}" with those filters.\n\nWould you like to try a different search?`);
+            // Qn 6 Flow: No doctors found
+            addBotMsg(`I can't seem to find doctor recommendations with ${condition} in this hospital. Do you want me to:`);
             showQuickReplies([
-                { label: '🔄 New Recommendation', value: 'restart' },
-                { label: '🔍 Try Another Condition', value: 'condition' },
+                { label: '1. Recommend other doctors from another hospital in the same state in the database?', value: 'another-hosp' },
+                { label: '2. Find other doctors from Internet.', value: 'internet' },
+                { label: '🔄 Start Over', value: 'restart' }
             ]);
-            pendingStep.current = 'done-choice';
+            pendingStep.current = 'qn6-choice';
             return;
         }
 
@@ -406,16 +437,19 @@ export default function DoctorChatWidget({ botKey, sessionId, onSessionCreated }
         }]);
 
         if (recs.length === 1) {
-            addBotMsg('I only found 1 doctor recommendation. Would you like to look for more?');
+            // Qn 5 Flow: Only 1 doctor found
+            addBotMsg('I only found 1 doctor recommendation. Do you want me to:');
             showQuickReplies([
-                { label: '🔍 Try Another Condition', value: 'condition' },
-                { label: '🔄 Start Over', value: 'restart' },
+                { label: '1. Recommend another doctor from another hospital in the same state in the database?', value: 'another-hosp' },
+                { label: '2. Find another doctor from the Internet.', value: 'internet' },
+                { label: '🔄 Start Over', value: 'restart' }
             ]);
+            pendingStep.current = 'qn5-choice';
         } else {
             addBotMsg('Here are your doctor recommendations! ⚠️ Please verify each link before sharing with the member.');
             showQuickReplies([{ label: '🔄 New Recommendation', value: 'restart' }]);
+            pendingStep.current = 'done-choice';
         }
-        pendingStep.current = 'done-choice';
 
         // Refresh history sidebar after saving
         if (onSessionCreated) {
