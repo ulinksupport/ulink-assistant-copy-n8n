@@ -35,11 +35,32 @@ async function doPostNewSession(req, res) {
     }
 
     // check assisstant & user exist or not.
-    if (!await checkExistAsstRecord({_id: assistantId})) {
-        return res.status(400).json({ message: 'Assistant ID not exist.'});
+    // For webhook-based assistants ("my-doctor", "sg-doctor"), we can bypass backend document validation or handle gracefully.
+    const isWebhookApp = assistantId === 'sg-doctor' || assistantId === 'my-doctor' || assistantId === 'fm-clinic' || assistantId === 'allianz-cso' || assistantId === 'singlife-call';
+    
+    if (!isWebhookApp) {
+        if (!mongoose.isValidObjectId(assistantId)) {
+            return res.status(400).json({ message: 'Assistant ID is not a valid ObjectId.' });
+        }
+        try {
+            if (!await checkExistAsstRecord({_id: assistantId})) {
+                return res.status(400).json({ message: 'Assistant ID not exist.'});
+            }
+        } catch (error) {
+            return res.status(500).json({ message: 'Error checking Assistant record.'});
+        }
     }
-    if (!await checkExistUserRecord({ _id: userId })) {
-        return res.status(400).json({ message: 'User ID not exist.'});
+
+    if (!mongoose.isValidObjectId(userId)) {
+        return res.status(400).json({ message: 'User ID is not a valid ObjectId.' });
+    }
+
+    try {
+        if (!await checkExistUserRecord({ _id: userId })) {
+            return res.status(400).json({ message: 'User ID not exist.'});
+        }
+    } catch (error) {
+         return res.status(500).json({ message: 'Error checking User record.'});
     }
 
     const sessionId = doGenerateSessionKey(assistantId, userId);
@@ -50,12 +71,18 @@ async function doPostNewSession(req, res) {
 
     try {
         await saveSession(newSession);
-        const chat = await doCreateNewChat({
-            assistantId,
+        
+        const chatPayload = {
             userId,
             sessionId,
             title: `(${moment(new Date()).format('DD MMMM YYYY HH:mm A')}) - New Chat`
-        });
+        };
+        
+        if (!isWebhookApp) {
+            chatPayload.assistantId = assistantId;
+        }
+
+        const chat = await doCreateNewChat(chatPayload);
 
         return res.status(201).json({ 
             message: 'Succesfully Created New Chat Session',
