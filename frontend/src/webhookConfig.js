@@ -34,7 +34,7 @@ export const WEBHOOK_ASSISTANTS = {
     providerSearch: {
         key: 'provider-search-my',
         name: 'Provider Search',
-        webhookUrl: process.env.REACT_APP_N8N_WEBHOOK_PROVIDER_SEARCH || '<n8n_webhook_url_placeholder>',
+        webhookUrl: process.env.REACT_APP_N8N_WEBHOOK_PROVIDER_SEARCH || 'https://ulink.app.n8n.cloud/webhook/efbb2669-0eeb-4f98-9bcf-c28223c67bb1',
         description: 'Provider Search Assistant'
     }
 };
