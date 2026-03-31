@@ -1,0 +1,296 @@
+/* DoctorChatWidget.css — Guided doctor-recommendation chat UI */
+
+:root {
+  --ps-ink:          #0f1923;
+  --ps-paper:        #f5f0e8;
+  --ps-cream:        #ede8dc;
+  --ps-accent:       #c0392b;
+  --ps-accent-light: #e8d5d3;
+  --ps-muted:        #6b6560;
+  --ps-white:        #ffffff;
+  --ps-border:       #d5cfc4;
+}
+
+/* ── Container ─────────────────────────────────────────────────────────────── */
+.ps-widget {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 480px;
+  background: var(--ps-paper);
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: 'DM Sans', 'Inter', sans-serif;
+}
+
+/* ── Step progress bar ─────────────────────────────────────────────────────── */
+.ps-steps {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--ps-white);
+  border-bottom: 1px solid var(--ps-border);
+}
+
+.ps-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ps-border);
+  transition: background 0.3s, transform 0.3s;
+  flex-shrink: 0;
+}
+.ps-dot.active { background: var(--ps-accent); transform: scale(1.4); }
+.ps-dot.done   { background: var(--ps-ink); }
+
+.ps-step-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ps-muted);
+  font-weight: 600;
+  margin-left: 6px;
+}
+
+/* ── Messages area ─────────────────────────────────────────────────────────── */
+.ps-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 16px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Message row ───────────────────────────────────────────────────────────── */
+.ps-msg {
+  display: flex;
+  gap: 10px;
+  animation: ps-fadeUp 0.25s ease forwards;
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+@keyframes ps-fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ps-msg.user {
+  flex-direction: row-reverse;
+}
+
+/* ── Avatar ────────────────────────────────────────────────────────────────── */
+.ps-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.ps-msg.bot  .ps-avatar { background: var(--ps-ink);    color: var(--ps-paper); }
+.ps-msg.user .ps-avatar { background: var(--ps-accent); color: white; }
+
+/* ── Bubble ────────────────────────────────────────────────────────────────── */
+.ps-bubble {
+  max-width: 80%;
+  padding: 11px 15px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.ps-msg.bot .ps-bubble {
+  background: var(--ps-white);
+  border: 1px solid var(--ps-border);
+  border-top-left-radius: 4px;
+  color: var(--ps-ink);
+}
+
+.ps-msg.user .ps-bubble {
+  background: var(--ps-ink);
+  color: var(--ps-paper);
+  border-top-right-radius: 4px;
+}
+
+/* ── Typing indicator ──────────────────────────────────────────────────────── */
+.ps-typing {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+}
+.ps-typing span {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--ps-muted);
+  animation: ps-bounce 1.2s infinite;
+}
+.ps-typing span:nth-child(2) { animation-delay: 0.2s; }
+.ps-typing span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes ps-bounce {
+  0%,60%,100% { transform: translateY(0); }
+  30%          { transform: translateY(-6px); }
+}
+
+/* ── Doctor cards ──────────────────────────────────────────────────────────── */
+.ps-cards { margin-top: 6px; display: flex; flex-direction: column; gap: 10px; }
+
+.doc-card {
+  background: var(--ps-cream);
+  border: 1px solid var(--ps-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  position: relative;
+}
+
+.doc-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 12px; bottom: 12px;
+  width: 3px;
+  background: var(--ps-accent);
+  border-radius: 0 2px 2px 0;
+}
+
+.doc-card .rec-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ps-accent);
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.doc-card .doc-name {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 3px;
+  color: var(--ps-ink);
+}
+
+.doc-card .doc-hospital {
+  font-size: 13px;
+  color: var(--ps-muted);
+  margin-bottom: 10px;
+}
+
+.doc-card table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.doc-card td {
+  padding: 3px 0;
+  vertical-align: top;
+}
+
+.doc-card td:first-child {
+  color: var(--ps-muted);
+  font-weight: 600;
+  width: 110px;
+  padding-right: 8px;
+}
+
+.doc-card a {
+  color: var(--ps-accent);
+  text-decoration: none;
+  word-break: break-all;
+}
+.doc-card a:hover { text-decoration: underline; }
+
+.source-badge {
+  display: inline-block;
+  font-size: 10px;
+  background: var(--ps-accent-light);
+  color: var(--ps-accent);
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+/* ── Input area ────────────────────────────────────────────────────────────── */
+.ps-input-area {
+  border-top: 1px solid var(--ps-border);
+  background: var(--ps-paper);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Quick replies ─────────────────────────────────────────────────────────── */
+.ps-quick-replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ps-qr-btn {
+  padding: 7px 14px;
+  border: 1.5px solid var(--ps-ink);
+  background: transparent;
+  border-radius: 20px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--ps-ink);
+  transition: all 0.15s;
+}
+.ps-qr-btn:hover {
+  background: var(--ps-ink);
+  color: var(--ps-paper);
+}
+
+/* ── Text input row ────────────────────────────────────────────────────────── */
+.ps-text-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ps-text-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1.5px solid var(--ps-border);
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  background: var(--ps-white);
+  color: var(--ps-ink);
+  transition: border-color 0.2s;
+}
+.ps-text-input:focus { border-color: var(--ps-ink); }
+.ps-text-input::placeholder { color: var(--ps-muted); }
+
+.ps-send-btn {
+  width: 42px; height: 42px;
+  border-radius: 10px;
+  background: var(--ps-accent);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, transform 0.1s;
+}
+.ps-send-btn:hover   { background: #a93226; }
+.ps-send-btn:active  { transform: scale(0.95); }
+.ps-send-btn:disabled { background: var(--ps-border); cursor: not-allowed; }
+
+.ps-send-btn svg {
+  width: 16px; height: 16px;
+  fill: white;
+}

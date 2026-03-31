@@ -30,6 +30,12 @@ export const WEBHOOK_ASSISTANTS = {
         name: 'Allianz CSO',
         webhookUrl: process.env.REACT_APP_N8N_WEBHOOK_ALLIANZ || 'https://ulink.app.n8n.cloud/webhook/abeea2c1-b806-49da-b808-891c90b76ee4',
         description: 'Allianz customer service assistant'
+    },
+    providerSearch: {
+        key: 'provider-search-my',
+        name: 'Provider Search',
+        webhookUrl: process.env.REACT_APP_N8N_WEBHOOK_PROVIDER_SEARCH || '<n8n_webhook_url_placeholder>',
+        description: 'Provider Search Assistant'
     }
 };
 

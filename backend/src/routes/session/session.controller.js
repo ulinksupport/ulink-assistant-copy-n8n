@@ -36,7 +36,7 @@ async function doPostNewSession(req, res) {
 
     // check assisstant & user exist or not.
     // For webhook-based assistants ("my-doctor", "sg-doctor"), we can bypass backend document validation or handle gracefully.
-    const isWebhookApp = assistantId === 'sg-doctor' || assistantId === 'my-doctor' || assistantId === 'fm-clinic' || assistantId === 'allianz-cso' || assistantId === 'singlife-call';
+    const isWebhookApp = assistantId === 'sg-doctor' || assistantId === 'my-doctor' || assistantId === 'fm-clinic' || assistantId === 'allianz-cso' || assistantId === 'singlife-call' || assistantId === 'provider-search-my';
     
     if (!isWebhookApp) {
         if (!mongoose.isValidObjectId(assistantId)) {

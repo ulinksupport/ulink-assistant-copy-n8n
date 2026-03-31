@@ -24,9 +24,13 @@ import LoadingSpinner from "../components/utils/LoadingSpinner.jsx";
 import AdminPanel from "./AdminPanel.jsx";
 import { getWebhookAssistants } from "../webhookConfig.js";
 import DoctorChatWidget from "../components/DoctorChatWidget.jsx";
+import ProviderSearchWidget from "../components/ProviderSearchWidget.jsx";
 
 // Keys that use the guided doctor chat widget
 const DOCTOR_KEYS = ['sg-doctor', 'my-doctor'];
+
+// Keys that use the guided provider search widget
+const PROVIDER_KEYS = ['provider-search-my'];
 
 // Keep only 2 iframe assistants
 const LINDY_EMBED_ASSISTANT = {
@@ -487,7 +491,7 @@ export default function Dashboard() {
 
             <div
               className="chat-messages"
-              style={{ position: "relative", minHeight: 320, padding: DOCTOR_KEYS.includes(botKey) ? 0 : undefined }}
+              style={{ position: "relative", minHeight: 320, padding: DOCTOR_KEYS.includes(botKey) || PROVIDER_KEYS.includes(botKey) ? 0 : undefined }}
               role="log"
               aria-live="polite"
             >
@@ -498,6 +502,14 @@ export default function Dashboard() {
               ) : DOCTOR_KEYS.includes(botKey) ? (
                 /* ── Guided doctor chat widget ── */
                 <DoctorChatWidget
+                  key={botKey}
+                  botKey={botKey}
+                  sessionId={sessionId || null}
+                  onSessionCreated={(newSessions) => setSessions(newSessions || [])}
+                />
+              ) : PROVIDER_KEYS.includes(botKey) ? (
+                /* ── Guided provider search widget ── */
+                <ProviderSearchWidget
                   key={botKey}
                   botKey={botKey}
                   sessionId={sessionId || null}
@@ -541,7 +553,7 @@ export default function Dashboard() {
             </div>
 
             {botKey !== LINDY_EMBED_ASSISTANT.key &&
-              !DOCTOR_KEYS.includes(botKey) && (
+              !DOCTOR_KEYS.includes(botKey) && !PROVIDER_KEYS.includes(botKey) && (
                 <form className="composer" onSubmit={onSend}>
                   <div className="upload-button-wrap">
                     <ChatUploadButton
